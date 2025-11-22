@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord Bot Builder (Python/discord.py)</title>
+    <title>Discord Bot Builder (Public Edition)</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -32,15 +32,6 @@
     <script src="https://unpkg.com/blockly@9.0.0/blockly.min.js"></script>
     <script src="https://unpkg.com/blockly@9.0.0/python_compressed.js"></script> <!-- Python Generator -->
     <script src="https://unpkg.com/blockly@9.0.0/msg/ja.js"></script> <!-- 日本語化パック -->
-    
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        window.firebaseImports = { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, doc, setDoc, getDoc, onSnapshot, setLogLevel };
-    </script>
     
     <!-- Icons (Lucide) -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -143,15 +134,23 @@
             </div>
             <div>
                 <h1 class="text-xl font-bold text-gray-800 dark:text-white leading-tight">Discord Bot Builder</h1>
-                <p class="text-xs text-indigo-600 dark:text-indigo-400 font-medium">日本語版 Python (discord.py)</p>
+                <p class="text-xs text-indigo-600 dark:text-indigo-400 font-medium">Public Edition (Python)</p>
             </div>
         </div>
 
-        <div class="flex items-center gap-4">
-            <div class="hidden md:flex items-center text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-600">
-                <span id="authStatus">接続中...</span>
-                <span id="saveStatus" class="ml-2 font-bold text-green-600 dark:text-green-400"></span>
-            </div>
+        <div class="flex items-center gap-3">
+            <span id="saveStatus" class="text-xs font-bold text-green-600 dark:text-green-400 mr-2 opacity-0 transition-opacity duration-500">保存しました</span>
+
+            <!-- ファイル操作ボタン -->
+            <input type="file" id="importInput" accept=".xml" class="hidden">
+            <button id="importBtn" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" title="プロジェクトを読込 (XML)">
+                <i data-lucide="upload" class="w-5 h-5"></i>
+            </button>
+            <button id="exportBtn" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" title="プロジェクトを保存 (XML)">
+                <i data-lucide="download" class="w-5 h-5"></i>
+            </button>
+
+            <div class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
 
             <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors" title="テーマ切り替え">
                 <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
@@ -160,7 +159,7 @@
 
             <button id="showCodeBtn" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-medium shadow-lg hover:shadow-indigo-500/30 transition-all transform hover:-translate-y-0.5">
                 <i data-lucide="code" class="w-4 h-4"></i>
-                <span>コードを作成</span>
+                <span class="hidden sm:inline">コード生成</span>
             </button>
         </div>
     </header>
@@ -301,16 +300,8 @@
     <script>
         lucide.createIcons();
 
-        // グローバル変数
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
-
-        let db;
-        let auth;
-        let userId = null;
         let workspace;
-        let isAuthReady = false;
+        const STORAGE_KEY = 'discord_bot_builder_workspace_public';
 
         // ===========================================
         // 0. テーマ設定 & 日本語化設定
@@ -357,11 +348,20 @@
                 html.classList.remove('dark');
                 html.classList.add('light');
                 if (workspace) workspace.setTheme(modernLightTheme);
+                localStorage.setItem('theme', 'light');
             } else {
                 html.classList.remove('light');
                 html.classList.add('dark');
                 if (workspace) workspace.setTheme(modernDarkTheme);
+                localStorage.setItem('theme', 'dark');
             }
+        }
+
+        // 初期テーマ読み込み
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            html.classList.add('dark');
+            html.classList.remove('light');
         }
 
         themeToggle.addEventListener('click', toggleTheme);
@@ -827,14 +827,11 @@ if isinstance(ctx, discord.Interaction):
         };
 
         Blockly.Python['delete_message'] = function(block) {
-            // メッセージイベント(message)かインタラクション(interaction)かによって削除方法が異なる場合の考慮
-            // ここでは簡易的にmessage変数が存在する場合（on_message内）を想定、またはinteraction.message
             return `
 if 'message' in locals():
     await message.delete()
 elif isinstance(ctx, discord.Interaction):
-    # スラッシュコマンドの場合、コマンドへの応答を削除するか、元メッセージを削除するかは文脈によるが
-    # ここでは何もしないか、あるいは引数で指定が必要。
+    # スラッシュコマンドの場合、何も処理しません
     pass
 `;
         };
@@ -971,37 +968,61 @@ if ch:
         const copyCodeBtn = document.getElementById('copyCodeBtn');
         const codeOutput = document.getElementById('codeOutput');
         const saveStatus = document.getElementById('saveStatus');
+        const importInput = document.getElementById('importInput');
+        const importBtn = document.getElementById('importBtn');
+        const exportBtn = document.getElementById('exportBtn');
 
-        // Save/Load Logic
-        const saveProject = async () => {
-            if (!db || !userId) return;
+        // Save to LocalStorage
+        const saveToLocal = () => {
+            if (!workspace) return;
             const xml = Blockly.Xml.workspaceToDom(workspace);
             const xmlText = Blockly.Xml.domToText(xml);
-            const userProjectRef = window.firebaseImports.doc(db, `artifacts/${appId}/users/${userId}/discord_bot_projects/main_project`);
-            try {
-                saveStatus.textContent = '保存中...';
-                await window.firebaseImports.setDoc(userProjectRef, { xml: xmlText, savedAt: new Date().toISOString() });
-                saveStatus.textContent = '保存完了';
-                setTimeout(() => saveStatus.textContent = '', 2000);
-            } catch (error) {
-                console.error("Save error:", error);
-                saveStatus.textContent = 'エラー';
+            localStorage.setItem(STORAGE_KEY, xmlText);
+            
+            saveStatus.style.opacity = '1';
+            setTimeout(() => saveStatus.style.opacity = '0', 2000);
+        };
+
+        // Load from LocalStorage
+        const loadFromLocal = () => {
+            const xmlText = localStorage.getItem(STORAGE_KEY);
+            if (xmlText && workspace) {
+                const xml = Blockly.Xml.textToDom(xmlText);
+                Blockly.Xml.clearWorkspaceAndLoadFromXml(xml, workspace);
             }
         };
 
-        const loadProject = async () => {
-            if (!db || !userId) return;
-            const userProjectRef = window.firebaseImports.doc(db, `artifacts/${appId}/users/${userId}/discord_bot_projects/main_project`);
-            try {
-                const docSnap = await window.firebaseImports.getDoc(userProjectRef);
-                if (docSnap.exists()) {
-                    const xml = Blockly.Xml.textToDom(docSnap.data().xml);
+        // File Import/Export
+        importBtn.addEventListener('click', () => importInput.click());
+        importInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const xml = Blockly.Xml.textToDom(e.target.result);
                     Blockly.Xml.clearWorkspaceAndLoadFromXml(xml, workspace);
+                    saveToLocal(); // Importしたらローカルも更新
+                } catch (err) {
+                    alert('ファイルの読み込みに失敗しました');
                 }
-            } catch (error) {
-                console.error("Load error:", error);
-            }
-        };
+            };
+            reader.readAsText(file);
+            e.target.value = ''; // Reset
+        });
+
+        exportBtn.addEventListener('click', () => {
+            if (!workspace) return;
+            const xml = Blockly.Xml.workspaceToDom(workspace);
+            const xmlText = Blockly.Xml.domToText(xml);
+            const blob = new Blob([xmlText], {type: 'text/xml'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bot-project-${new Date().toISOString().slice(0,10)}.xml`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
 
         const generatePythonCode = () => {
             let rawCode = Blockly.Python.workspaceToCode(workspace);
@@ -1033,33 +1054,7 @@ bot.run('YOUR_BOT_TOKEN_HERE')
             return boilerplate.trim();
         };
 
-        const initializeApp = async () => {
-            if (firebaseConfig) {
-                const app = window.firebaseImports.initializeApp(firebaseConfig);
-                db = window.firebaseImports.getFirestore(app);
-                auth = window.firebaseImports.getAuth(app);
-                
-                await new Promise(resolve => {
-                    const unsubscribe = window.firebaseImports.onAuthStateChanged(auth, async (user) => {
-                        if (!user) {
-                            if (initialAuthToken) await window.firebaseImports.signInWithCustomToken(auth, initialAuthToken);
-                            else await window.firebaseImports.signInAnonymously(auth);
-                            resolve();
-                        } else {
-                            userId = user.uid;
-                            document.getElementById('authStatus').textContent = 'オンライン';
-                            isAuthReady = true;
-                            unsubscribe();
-                            resolve();
-                        }
-                    });
-                });
-            } else {
-                document.getElementById('authStatus').textContent = 'オフラインモード';
-                isAuthReady = true;
-                userId = 'offline-user';
-            }
-
+        const initializeApp = () => {
             const blocklyDiv = document.getElementById('blocklyDiv');
             const toolbox = document.getElementById('toolbox');
             
@@ -1069,14 +1064,14 @@ bot.run('YOUR_BOT_TOKEN_HERE')
                 trashcan: true,
                 zoom: { controls: true, wheel: true, startScale: 1.0, maxScale: 3, minScale: 0.3, scaleSpeed: 1.2 },
                 renderer: 'zelos',
-                theme: modernLightTheme
+                theme: savedTheme === 'dark' ? modernDarkTheme : modernLightTheme
             });
 
-            if (isAuthReady) await loadProject();
+            loadFromLocal();
 
             workspace.addChangeListener((e) => {
                 if (e.isUiEvent || e.type === Blockly.Events.FINISHED_LOADING) return;
-                saveProject();
+                saveToLocal();
             });
 
             showCodeBtn.addEventListener('click', () => {
