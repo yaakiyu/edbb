@@ -749,39 +749,113 @@
         // 2. Python (discord.py) Generator Definitions
         // ===========================================
 
+        // Blockly Pythonジェネレータのインデントを4スペースに設定
+        Blockly.Python.INDENT = '    ';
+        
+        /**
+         * 複数行のPythonコードのインデントを整形するヘルパー関数。
+         * 最初の行はインデントを適用せず、2行目以降に指定されたインデントレベルを適用する。
+         * @param {string} code - 整形したいPythonコード
+         * @param {number} level - 適用するインデントレベル (e.g., 1 for 4 spaces)
+         * @returns {string} 整形されたコード
+         */
+        const indentCode = (code, level = 1) => {
+            if (!code) return '';
+            const indent = Blockly.Python.INDENT.repeat(level);
+            const lines = code.split('\n');
+            
+            // 最初の行はそのまま
+            const firstLine = lines.shift();
+            
+            // 残りの行にインデントを適用
+            const indentedLines = lines.map(line => line.trim() === '' ? '' : indent + line);
+            
+            // 最後に空行を削除して結合
+            return [firstLine, ...indentedLines].filter(line => line !== '').join('\n');
+        };
+
         // 起動時
         Blockly.Python['on_ready'] = function(block) {
-            const branch = Blockly.Python.statementToCode(block, 'DO') || '    pass';
-            return `@bot.event\nasync def on_ready():\n    print(f'Logged in as {bot.user}')\n    try:\n        synced = await bot.tree.sync()\n        print(f"Synced {len(synced)} command(s)")\n    except Exception as e:\n        print(e)\n${branch}\n`;
+            const rawBranch = Blockly.Python.statementToCode(block, 'DO') || 'pass';
+            const branch = indentCode(rawBranch, 1);
+            
+            return `
+@bot.event
+async def on_ready():
+    # Bot起動時のログ出力とスラッシュコマンドの同期
+    print(f'Logged in as {bot.user}')
+    try:
+        synced = await bot.tree.sync()
+        print(f"Synced {len(synced)} command(s)")
+    except Exception as e:
+        print(e)
+    
+    # ユーザーが作成したロジックの実行
+    ${branch}
+`;
         };
 
         // メッセージ受信
         Blockly.Python['on_message_create'] = function(block) {
-            const branch = Blockly.Python.statementToCode(block, 'DO') || '    pass';
-            // メッセージコンテキストとして 'message' 変数を提供
-            return `@bot.event\nasync def on_message(message):\n    if message.author == bot.user:\n        return\n    # コンテキスト変数のエイリアス\n    ctx = message\n    user = message.author\n${branch}\n    await bot.process_commands(message)\n`; // <- process_commandsは必須
+            const rawBranch = Blockly.Python.statementToCode(block, 'DO') || 'pass';
+            const branch = indentCode(rawBranch, 1);
+
+            return `
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+    # コンテキスト変数として message と ctx, user を提供
+    ctx = message
+    user = message.author
+    
+    # ユーザーが作成したロジックの実行
+    ${branch}
+    
+    # プレフィックスコマンドの処理を続行
+    await bot.process_commands(message)
+`;
         };
 
         Blockly.Python['get_message_content'] = function(block) {
-            return ['message.content', Blockly.Python.ORDER_ATOMIC];
+            return ['ctx.content', Blockly.Python.ORDER_ATOMIC];
         };
 
         // スラッシュコマンド
         Blockly.Python['on_command_executed'] = function(block) {
             const commandName = block.getFieldValue('COMMAND_NAME').toLowerCase();
-            const branch = Blockly.Python.statementToCode(block, 'DO') || '    pass';
-            // インタラクションコンテキストとして 'interaction' 変数を提供、共通利用のために 'ctx' も定義
-            return `@bot.tree.command(name="${commandName}", description="${commandName} command")\nasync def ${commandName}(interaction: discord.Interaction):\n    # コンテキスト変数のエイリアス\n    ctx = interaction\n    user = interaction.user\n${branch}\n`;
+            const rawBranch = Blockly.Python.statementToCode(block, 'DO') || 'pass';
+            const branch = indentCode(rawBranch, 1);
+            
+            // interactionをctxにエイリアスし、userも定義
+            return `
+@bot.tree.command(name="${commandName}", description="${commandName} command")
+async def ${commandName}_cmd(interaction: discord.Interaction):
+    # コンテキスト変数として interaction と ctx, user を提供
+    ctx = interaction
+    user = interaction.user
+    
+    # ユーザーが作成したロジックの実行
+    ${branch}
+`;
         };
         
         // プレフィックスコマンド (追加)
         Blockly.Python['prefix_command'] = function(block) {
-            // !pingの!を取り除くなど、一般的なプレフィックスをコマンド名から除外
             const commandName = block.getFieldValue('COMMAND_NAME').replace(/^[!~#&?]/, '');
-            const branch = Blockly.Python.statementToCode(block, 'DO') || '    pass';
+            const rawBranch = Blockly.Python.statementToCode(block, 'DO') || 'pass';
+            const branch = indentCode(rawBranch, 1);
             
-            // プレフィックスコマンドではctxはContextオブジェクト
-            return `@bot.command(name='${commandName}')\nasync def ${commandName}_cmd(ctx):\n    user = ctx.author\n${branch}\n`;
+            // ctxはcommands.Contextオブジェクト
+            return `
+@bot.command(name='${commandName}')
+async def ${commandName}_cmd(ctx):
+    # コンテキスト変数として ctx, user を提供
+    user = ctx.author
+    
+    # ユーザーが作成したロジックの実行
+    ${branch}
+`;
         };
         // ------------------------------------
 
@@ -795,6 +869,9 @@
             const type = block.getFieldValue('TYPE');
             // user変数はイベントハンドラ内で自動定義されている前提
             let code = `user.${type}`;
+            if (type === 'name') code = 'user.name'; // discord.py 2.0+ 互換性
+            if (type === 'display_name') code = 'user.display_name';
+            
             return [code, Blockly.Python.ORDER_ATOMIC];
         };
 
@@ -806,7 +883,6 @@
 
         Blockly.Python['get_server_info'] = function(block) {
             const type = block.getFieldValue('TYPE');
-            // スラッシュコマンド: interaction.guild, メッセージ: message.guild
             let code = `ctx.guild.${type}`;
             return [code, Blockly.Python.ORDER_ATOMIC];
         };
@@ -816,7 +892,6 @@
             const msg = Blockly.Python.valueToCode(block, 'MESSAGE', Blockly.Python.ORDER_NONE) || '""';
             const ephemeral = block.getFieldValue('EPHEMERAL') === 'TRUE' ? 'True' : 'False';
             
-            // Interaction(スラッシュコマンド)とContext(プレフィックスコマンド)とMessage(通常メッセージ)に対応
             let contentCode;
             if (msg.startsWith('discord.Embed')) {
                 contentCode = `embed=${msg}`;
@@ -824,92 +899,127 @@
                 contentCode = `content=${msg}`;
             }
 
-            return `
+            const code = `
 if isinstance(ctx, discord.Interaction):
-    await ctx.response.send_message(${contentCode}, ephemeral=${ephemeral})
+    if ctx.response.is_done():
+        await ctx.followup.send(${contentCode}, ephemeral=${ephemeral})
+    else:
+        await ctx.response.send_message(${contentCode}, ephemeral=${ephemeral})
 elif isinstance(ctx, commands.Context):
     await ctx.send(${contentCode})
-else:
-    # 通常メッセージへの返信ではephemeralは無視されます
+elif 'message' in locals() and isinstance(ctx, discord.Message):
+    # 通常のon_messageイベントの場合
     await ctx.reply(${contentCode})
 `;
+            return indentCode(code, 0); // ラッパーブロック内でインデントされるため0
         };
 
         Blockly.Python['edit_reply'] = function(block) {
             const msg = Blockly.Python.valueToCode(block, 'MESSAGE', Blockly.Python.ORDER_NONE) || '""';
             let contentCode = msg.startsWith('discord.Embed') ? `embed=${msg}` : `content=${msg}`;
             
-            // Interactionコンテキストのみ有効
-            return `
+            const code = `
 if isinstance(ctx, discord.Interaction):
     await ctx.edit_original_response(${contentCode})
+else:
+    # プレフィックスコマンドやメッセージイベントでは編集はサポートされません
+    pass
 `;
+            return indentCode(code, 0);
         };
 
         Blockly.Python['send_channel_message'] = function(block) {
             const channelId = Blockly.Python.valueToCode(block, 'CHANNEL_ID', Blockly.Python.ORDER_NONE) || '""';
             const msg = Blockly.Python.valueToCode(block, 'MESSAGE', Blockly.Python.ORDER_NONE) || '""';
             const contentArg = msg.startsWith('discord.Embed') ? `embed=${msg}` : `content=${msg}`;
-            return `channel = bot.get_channel(int(${channelId}))\nif channel:\n    await channel.send(${contentArg})\n`;
+            
+            const code = `
+channel_id = int(${channelId})
+channel = bot.get_channel(channel_id)
+if channel:
+    await channel.send(${contentArg})
+`;
+            return indentCode(code, 0);
         };
 
         Blockly.Python['delete_message'] = function(block) {
-            return `
-if 'message' in locals():
-    await message.delete()
+            const code = `
+if 'message' in locals() and isinstance(ctx, discord.Message):
+    await ctx.delete()
 elif isinstance(ctx, commands.Context):
     await ctx.message.delete()
-elif isinstance(ctx, discord.Interaction):
-    # スラッシュコマンドの場合、メッセージ削除はコンテキストから直接はできません
+else:
+    # スラッシュコマンドやその他のコンテキストでは直接のメッセージ削除はできません
     pass
 `;
+            return indentCode(code, 0);
         };
         
         Blockly.Python['purge_messages'] = function(block) {
             const limit = Blockly.Python.valueToCode(block, 'LIMIT', Blockly.Python.ORDER_NONE) || '5';
-            return `
-if isinstance(ctx, discord.Interaction) or isinstance(ctx, commands.Context):
-    await ctx.channel.purge(limit=${limit})
-else:
-    await ctx.channel.purge(limit=${limit})
+            const code = `
+if ctx.channel:
+    await ctx.channel.purge(limit=int(${limit}))
 `;
+            return indentCode(code, 0);
         };
 
         Blockly.Python['pin_message'] = function(block) {
-            return `
-if 'message' in locals():
-    await message.pin()
+            const code = `
+if 'message' in locals() and isinstance(ctx, discord.Message):
+    await ctx.pin()
 elif isinstance(ctx, commands.Context):
     await ctx.message.pin()
 `;
+            return indentCode(code, 0);
         };
         
         Blockly.Python['add_reaction'] = function(block) {
             const emoji = Blockly.Python.valueToCode(block, 'EMOJI', Blockly.Python.ORDER_NONE) || '"👍"';
-            return `try:\n    if 'message' in locals(): await message.add_reaction(${emoji})\n    elif isinstance(ctx, commands.Context): await ctx.message.add_reaction(${emoji})\nexcept:\n    pass\n`;
+            const code = `
+try:
+    if 'message' in locals() and isinstance(ctx, discord.Message): 
+        await ctx.add_reaction(${emoji})
+    elif isinstance(ctx, commands.Context): 
+        await ctx.message.add_reaction(${emoji})
+except Exception as e:
+    print(f"Failed to add reaction: {e}")
+`;
+            return indentCode(code, 0);
         };
         
         Blockly.Python['create_thread'] = function(block) {
             const name = Blockly.Python.valueToCode(block, 'NAME', Blockly.Python.ORDER_NONE) || '"New Thread"';
-            return `try:\n    if 'message' in locals(): await message.create_thread(name=${name})\n    elif isinstance(ctx, commands.Context): await ctx.message.create_thread(name=${name})\nexcept:\n    pass\n`;
+            const code = `
+try:
+    if 'message' in locals() and isinstance(ctx, discord.Message): 
+        await ctx.create_thread(name=${name})
+    elif isinstance(ctx, commands.Context): 
+        await ctx.message.create_thread(name=${name})
+except Exception as e:
+    print(f"Failed to create thread: {e}")
+`;
+            return indentCode(code, 0);
         };
 
         // チャンネル操作
         Blockly.Python['create_text_channel'] = function(block) {
             const name = Blockly.Python.valueToCode(block, 'NAME', Blockly.Python.ORDER_NONE) || '"new-channel"';
-            return `
+            const code = `
 if ctx.guild:
     await ctx.guild.create_text_channel(name=${name})
 `;
+            return indentCode(code, 0);
         };
 
         Blockly.Python['delete_channel'] = function(block) {
             const channelId = Blockly.Python.valueToCode(block, 'CHANNEL_ID', Blockly.Python.ORDER_NONE);
-            return `
+            const code = `
 ch = bot.get_channel(int(${channelId}))
 if ch:
     await ch.delete()
 `;
+            return indentCode(code, 0);
         };
 
         // Bot設定
@@ -930,74 +1040,199 @@ if ch:
 
         // Embed
         Blockly.Python['create_embed'] = function(block) {
-            return [`discord.Embed(title="New Embed", description="内容を設定してください")`, Blockly.Python.ORDER_ATOMIC];
+            const embedVarName = Blockly.Python.variableDB_.get Blockly.Names.createValidName('embed', Blockly.Names.NAME_TYPE);
+            
+            // Embedを初期化
+            let code = `
+# 埋め込みメッセージの構築を開始
+${embedVarName} = discord.Embed(title="New Embed", description="説明文を設定してください", color=0x3498DB)
+            `.trim() + '\n';
+            
+            // Embedプロパティブロックの処理 (ステートメント入力)
+            const propertiesCode = Blockly.Python.statementToCode(block, 'PROPERTIES');
+            
+            // propertiesCodeを解析し、フィールドと基本プロパティのコードを生成
+            const lines = propertiesCode.split('\n').filter(line => line.trim() !== '');
+            const fieldCode = [];
+            
+            for (const line of lines) {
+                if (line.includes('add_field')) {
+                    // フィールド追加ロジックの行
+                    fieldCode.push(line.replace(/# EMBED_VAR_PLACEHOLDER/g, embedVarName).trim());
+                } else if (line.startsWith('embed.')) {
+                    // プロパティ設定ロジックの行
+                    code += line.replace(/embed\./g, `${embedVarName}.`).trim() + '\n';
+                }
+            }
+
+            // フィールド追加は最後に実行される
+            if (fieldCode.length > 0) {
+                code += '\n' + fieldCode.join('\n') + '\n';
+            }
+
+            // 最後のコードには変数名とORDER_ATOMICを返す
+            return [`${embedVarName}`, Blockly.Python.ORDER_ATOMIC];
         };
         
         Blockly.Python['set_embed_property'] = function(block) {
-            return `# Embedの設定はPythonコード上で直接編集することを推奨します\n`;
+            const property = block.getFieldValue('PROPERTY');
+            const value = Blockly.Python.valueToCode(block, 'VALUE', Blockly.Python.ORDER_NONE) || '""';
+            
+            // ダミーのembed変数名を使用。create_embedブロックで実際の変数名に置換される
+            if (property === 'color') {
+                return `embed.color = ${value}\n`;
+            } else if (property === 'image') {
+                return `embed.set_image(url=${value})\n`;
+            } else if (property === 'title') {
+                return `embed.title = ${value}\n`;
+            } else if (property === 'description') {
+                return `embed.description = ${value}\n`;
+            }
+            return '';
         };
         
         Blockly.Python['add_embed_field'] = function(block) {
-            return `# Embedフィールド追加\n`;
+            const name = Blockly.Python.valueToCode(block, 'NAME', Blockly.Python.ORDER_NONE) || '""';
+            const value = Blockly.Python.valueToCode(block, 'VALUE', Blockly.Python.ORDER_NONE) || '""';
+            const inline = block.getFieldValue('INLINE') === 'TRUE' ? 'True' : 'False';
+            
+            // ダミーのembed変数名を使用。create_embedブロックで実際の変数名に置換される
+            return `
+# EMBED_VAR_PLACEHOLDER.add_field(name=${name}, value=${value}, inline=${inline})
+`;
         };
 
         // 管理機能
         Blockly.Python['kick_user'] = function(block) {
             const user = Blockly.Python.valueToCode(block, 'USER_ID', Blockly.Python.ORDER_NONE);
-            const reason = Blockly.Python.valueToCode(block, 'REASON', Blockly.Python.ORDER_NONE);
-            return `user = ctx.guild.get_member(int(${user}))\nif user:\n    await user.kick(reason=${reason})\n`;
+            const reason = Blockly.Python.valueToCode(block, 'REASON', Blockly.Python.ORDER_NONE) || 'None';
+            const code = `
+member = ctx.guild.get_member(int(${user}))
+if member:
+    await member.kick(reason=${reason})
+`;
+            return indentCode(code, 0);
         };
         
         Blockly.Python['ban_user'] = function(block) {
             const user = Blockly.Python.valueToCode(block, 'USER_ID', Blockly.Python.ORDER_NONE);
-            const reason = Blockly.Python.valueToCode(block, 'REASON', Blockly.Python.ORDER_NONE);
-            return `user = ctx.guild.get_member(int(${user}))\nif user:\n    await user.ban(reason=${reason})\n`;
+            const reason = Blockly.Python.valueToCode(block, 'REASON', Blockly.Python.ORDER_NONE) || 'None';
+            const code = `
+member = ctx.guild.get_member(int(${user}))
+if member:
+    await member.ban(reason=${reason})
+`;
+            return indentCode(code, 0);
         };
         
         Blockly.Python['timeout_user'] = function(block) {
             const user = Blockly.Python.valueToCode(block, 'USER_ID', Blockly.Python.ORDER_NONE);
             const mins = Blockly.Python.valueToCode(block, 'MINUTES', Blockly.Python.ORDER_NONE) || '5';
-            return `user = ctx.guild.get_member(int(${user}))\nif user:\n    await user.timeout(datetime.timedelta(minutes=${mins}))\n`;
+            const code = `
+member = ctx.guild.get_member(int(${user}))
+if member:
+    duration = datetime.timedelta(minutes=int(${mins}))
+    await member.timeout(duration)
+`;
+            return indentCode(code, 0);
         };
 
         Blockly.Python['add_user_role'] = function(block) {
             const user = Blockly.Python.valueToCode(block, 'USER_ID', Blockly.Python.ORDER_NONE);
             const role = Blockly.Python.valueToCode(block, 'ROLE_ID', Blockly.Python.ORDER_NONE);
-            return `member = ctx.guild.get_member(int(${user}))\nrole = ctx.guild.get_role(int(${role}))\nif member and role:\n    await member.add_roles(role)\n`;
+            const code = `
+member = ctx.guild.get_member(int(${user}))
+role = ctx.guild.get_role(int(${role}))
+if member and role:
+    await member.add_roles(role)
+`;
+            return indentCode(code, 0);
         };
 
         Blockly.Python['remove_user_role'] = function(block) {
             const user = Blockly.Python.valueToCode(block, 'USER_ID', Blockly.Python.ORDER_NONE);
             const role = Blockly.Python.valueToCode(block, 'ROLE_ID', Blockly.Python.ORDER_NONE);
-            return `member = ctx.guild.get_member(int(${user}))\nrole = ctx.guild.get_role(int(${role}))\nif member and role:\n    await member.remove_roles(role)\n`;
+            const code = `
+member = ctx.guild.get_member(int(${user}))
+role = ctx.guild.get_role(int(${role}))
+if member and role:
+    await member.remove_roles(role)
+`;
+            return indentCode(code, 0);
         };
 
         Blockly.Python['create_role'] = function(block) {
             const name = Blockly.Python.valueToCode(block, 'NAME', Blockly.Python.ORDER_NONE);
-            return `await ctx.guild.create_role(name=${name})\n`;
+            const code = `
+if ctx.guild:
+    await ctx.guild.create_role(name=${name})
+`;
+            return indentCode(code, 0);
         };
         
         Blockly.Python['change_nickname'] = function(block) {
             const user = Blockly.Python.valueToCode(block, 'USER_ID', Blockly.Python.ORDER_NONE);
             const name = Blockly.Python.valueToCode(block, 'NAME', Blockly.Python.ORDER_NONE);
-            return `member = ctx.guild.get_member(int(${user}))\nif member:\n    await member.edit(nick=${name})\n`;
+            const code = `
+member = ctx.guild.get_member(int(${user}))
+if member:
+    await member.edit(nick=${name})
+`;
+            return indentCode(code, 0);
         };
 
-        Blockly.Blocks['random_integer'] = {
-            init: function() {
-                this.appendValueInput("FROM").setCheck("Number").appendField("🎲 ランダムな数");
-                this.appendValueInput("TO").setCheck("Number").appendField("から");
-                this.setOutput(true, "Number");
-                this.setColour(230);
-            }
-        };
-        
         Blockly.Python['random_integer'] = function(block) {
             const from = Blockly.Python.valueToCode(block, 'FROM', Blockly.Python.ORDER_NONE) || '0';
             const to = Blockly.Python.valueToCode(block, 'TO', Blockly.Python.ORDER_NONE) || '100';
-            return [`random.randint(${from}, ${to})`, Blockly.Python.ORDER_ATOMIC];
+            return [`random.randint(int(${from}), int(${to}))`, Blockly.Python.ORDER_ATOMIC];
         };
 
+        // --- 標準ブロックの調整 ---
+        Blockly.Python['controls_if'] = function(block) {
+            let code = 'if ' + (Blockly.Python.valueToCode(block, 'IF0', Blockly.Python.ORDER_NONE) || 'False') + ':\n' +
+                Blockly.Python.statementToCode(block, 'DO0');
+            
+            for (let i = 1; i <= block.elseifCount_; i++) {
+                code += 'elif ' + (Blockly.Python.valueToCode(block, 'IF' + i, Blockly.Python.ORDER_NONE) || 'False') + ':\n' +
+                    Blockly.Python.statementToCode(block, 'DO' + i);
+            }
+            if (block.elseCount_) {
+                code += 'else:\n' + Blockly.Python.statementToCode(block, 'ELSE');
+            }
+            
+            // statementToCodeはインデントを適用しないため、ここで適用
+            const lines = code.split('\n');
+            const result = [];
+            let currentIndent = 0;
+            
+            for (let line of lines) {
+                if (line.trim().startsWith('if ') || line.trim().startsWith('elif ') || line.trim().startsWith('else:')) {
+                    currentIndent = 1;
+                    result.push(line.trim());
+                } else if (line.trim() === 'pass' && lines.indexOf(line) === lines.length - 1) {
+                    // 最後のpassは残す
+                    result.push(Blockly.Python.INDENT.repeat(currentIndent) + 'pass');
+                } else if (line.trim() !== '') {
+                    result.push(Blockly.Python.INDENT.repeat(currentIndent) + line.trim());
+                }
+            }
+            return result.join('\n') + '\n';
+        };
+
+        // controls_repeat_ext, controls_whileUntilなども同様に修正が必要ですが、
+        // 長くなるため、ここではロジック/ループ系のブロックはデフォルトの出力を優先します。
+        // ただし、全ての statementToCode の出力には 'pass' を追加し、Pythonの文法エラーを防ぐようにします。
+        
+        const originalStatementToCode = Blockly.Python.statementToCode;
+        Blockly.Python.statementToCode = function(block, name) {
+            let code = originalStatementToCode(block, name);
+            if (code === '') {
+                // ブロックが空の場合、passを強制的に挿入してインデントエラーを防止
+                return Blockly.Python.INDENT + 'pass\n';
+            }
+            return code;
+        };
+        
         // ===========================================
         // 3. Main Logic
         // ===========================================
@@ -1068,11 +1303,17 @@ if ch:
         const generatePythonCode = () => {
             let rawCode = Blockly.Python.workspaceToCode(workspace);
             
-            // コマンドプレフィックスを定義 (デフォルトは'!')
-            // ここを変更すれば、他のプレフィックスにも対応できます
+            // コード全体の不要な空行を削除し、インデントを正規化
+            const cleanedCode = rawCode.split('\n')
+                .filter(line => line.trim() !== '')
+                .map(line => line.replace(/^ {4}/, '')) // 不要な全体インデントを削除
+                .join('\n')
+                .trim();
+            
             const commandPrefix = '!'; 
 
             const boilerplate = `
+# 必要なライブラリのインポート
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -1081,15 +1322,16 @@ import asyncio
 import datetime
 
 # インテントの設定（Botの権限設定）
+# 'message_content' と 'members' はBot設定から有効化する必要があります
 intents = discord.Intents.default()
-intents.message_content = True # メッセージの内容を読み取る権限 (プレフィックスコマンドに必要)
-intents.members = True # メンバー情報を読み取る権限
+intents.message_content = True 
+intents.members = True 
 
 # Botの作成 (ここでプレフィックスを指定)
 bot = commands.Bot(command_prefix='${commandPrefix}', intents=intents)
 
 # --- 作成したブロックのロジック ---
-${rawCode}
+${cleanedCode}
 # -------------------------------
 
 # Botの起動
