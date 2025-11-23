@@ -142,7 +142,7 @@
             </button>
 
             <!-- 以下の href="" の中身を、あなたのGitHub WikiのURLに書き換えてください -->
-            <a href="https://github.com/himais0giiiin/easy-bdc/wiki/Docs" target="_blank" rel="noopener noreferrer" class="p-2 text-gray-600 transition-colors rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 flex items-center justify-center" title="ヘルプ / ドキュメント">
+            <a href="https://github.com/あなたのユーザー名/リポジトリ名/wiki" target="_blank" rel="noopener noreferrer" class="p-2 text-gray-600 transition-colors rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 flex items-center justify-center" title="ヘルプ / ドキュメント">
                 <i data-lucide="circle-help" class="w-5 h-5"></i>
             </a>
 
@@ -178,7 +178,6 @@
                 <block type="get_channel_info"></block>
                 <block type="get_server_info"></block>
                 <block type="get_current_time"></block>
-                <block type="get_bot_version"></block>
             </category>
 
             <category name="メッセージ" colour="#3498db">
@@ -365,19 +364,6 @@
             });
 
             Blockly.Python.INDENT = '    ';
-
-            // Helper to check if a block is properly nested in an event/definition
-            const isOrphan = (block) => {
-                const root = block.getRootBlock();
-                if (!root) return true;
-                const allowedRoots = [
-                    'on_ready', 'on_message_create', 'on_command_executed', 'prefix_command',
-                    'procedures_defnoreturn', 'procedures_defreturn'
-                ];
-                return !allowedRoots.includes(root.type);
-            };
-
-            const ORPHAN_WARNING = '# [エラー] このブロックはイベント(「Botが起動したとき」等)の中に配置してください\n';
             
             Blockly.Blocks['on_ready'] = {
                 init: function() {
@@ -516,15 +502,6 @@
                     this.appendDummyInput().appendField("🕒 現在時刻 (文字列)");
                     this.setOutput(true, "String");
                     this.setColour(260);
-                }
-            };
-
-            Blockly.Blocks['get_bot_version'] = {
-                init: function() {
-                    this.appendDummyInput().appendField("ℹ️ Botのバージョン");
-                    this.setOutput(true, "String");
-                    this.setColour(260);
-                    this.setTooltip("コード冒頭で設定されたBOT_VERSIONの値を返します。");
                 }
             };
 
@@ -1006,13 +983,8 @@ ${branch.trimEnd()}
             Blockly.Python['get_current_time'] = function(block) {
                 return [`datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')`, Blockly.Python.ORDER_ATOMIC];
             };
-
-            Blockly.Python['get_bot_version'] = function(block) {
-                return ['BOT_VERSION', Blockly.Python.ORDER_ATOMIC];
-            };
             
             Blockly.Python['reply_message'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const msg = Blockly.Python.valueToCode(block, 'MESSAGE', Blockly.Python.ORDER_NONE) || '""';
                 const ephemeral = block.getFieldValue('EPHEMERAL') === 'TRUE' ? 'True' : 'False';
                 let contentCode = msg.startsWith('discord.Embed') ? `embed=${msg}` : `content=${msg}`;
@@ -1032,7 +1004,6 @@ if 'ctx' in locals():
             };
 
             Blockly.Python['defer_reply'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const ephemeral = block.getFieldValue('EPHEMERAL') === 'TRUE' ? 'True' : 'False';
                 return `
 if 'ctx' in locals():
@@ -1044,7 +1015,6 @@ if 'ctx' in locals():
             };
 
             Blockly.Python['edit_reply'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const msg = Blockly.Python.valueToCode(block, 'MESSAGE', Blockly.Python.ORDER_NONE) || '""';
                 let contentCode = msg.startsWith('discord.Embed') ? `embed=${msg}` : `content=${msg}`;
                 return `
@@ -1054,7 +1024,6 @@ if 'ctx' in locals() and isinstance(ctx, discord.Interaction):
             };
 
             Blockly.Python['edit_message_by_id'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const channelId = Blockly.Python.valueToCode(block, 'CHANNEL_ID', Blockly.Python.ORDER_NONE) || '0';
                 const messageId = Blockly.Python.valueToCode(block, 'MESSAGE_ID', Blockly.Python.ORDER_NONE) || '0';
                 const content = Blockly.Python.valueToCode(block, 'CONTENT', Blockly.Python.ORDER_NONE) || '""';
@@ -1070,7 +1039,6 @@ except Exception as e:
             };
 
             Blockly.Python['send_channel_message'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const channelId = Blockly.Python.valueToCode(block, 'CHANNEL_ID', Blockly.Python.ORDER_NONE) || '0';
                 const msg = Blockly.Python.valueToCode(block, 'MESSAGE', Blockly.Python.ORDER_NONE) || '""';
                 const contentArg = msg.startsWith('discord.Embed') ? `embed=${msg}` : `content=${msg}`;
@@ -1083,7 +1051,6 @@ if _channel:
             };
 
             Blockly.Python['delete_message'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 return `
 if 'ctx' in locals():
     if isinstance(ctx, discord.Message):
@@ -1094,7 +1061,6 @@ if 'ctx' in locals():
             };
             
             Blockly.Python['purge_messages'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const limit = Blockly.Python.valueToCode(block, 'LIMIT', Blockly.Python.ORDER_NONE) || '5';
                 return `
 if 'ctx' in locals() and hasattr(ctx, 'channel') and hasattr(ctx.channel, 'purge'):
@@ -1103,7 +1069,6 @@ if 'ctx' in locals() and hasattr(ctx, 'channel') and hasattr(ctx.channel, 'purge
             };
 
             Blockly.Python['pin_message'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 return `
 if 'ctx' in locals():
     if isinstance(ctx, discord.Message):
@@ -1114,7 +1079,6 @@ if 'ctx' in locals():
             };
             
             Blockly.Python['add_reaction'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const emoji = Blockly.Python.valueToCode(block, 'EMOJI', Blockly.Python.ORDER_NONE) || '"👍"';
                 return `
 try:
@@ -1129,7 +1093,6 @@ except Exception:
             };
             
             Blockly.Python['create_thread'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const name = Blockly.Python.valueToCode(block, 'NAME', Blockly.Python.ORDER_NONE) || '"New Thread"';
                 return `
 try:
@@ -1157,7 +1120,6 @@ except Exception:
             };
 
             Blockly.Python['join_voice_channel'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 return `
 if 'user' in locals() and user.voice:
     await user.voice.channel.connect()
@@ -1165,7 +1127,6 @@ if 'user' in locals() and user.voice:
             };
 
             Blockly.Python['leave_voice_channel'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 return `
 if 'ctx' in locals() and ctx.guild.voice_client:
     await ctx.guild.voice_client.disconnect()
@@ -1173,7 +1134,6 @@ if 'ctx' in locals() and ctx.guild.voice_client:
             };
 
             Blockly.Python['create_text_channel'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const name = Blockly.Python.valueToCode(block, 'NAME', Blockly.Python.ORDER_NONE) || '"new-channel"';
                 return `
 if 'ctx' in locals() and ctx.guild:
@@ -1182,7 +1142,6 @@ if 'ctx' in locals() and ctx.guild:
             };
 
             Blockly.Python['delete_channel'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const channelId = Blockly.Python.valueToCode(block, 'CHANNEL_ID', Blockly.Python.ORDER_NONE) || '0';
                 return `
 _ch = bot.get_channel(int(${channelId}))
@@ -1192,7 +1151,6 @@ if _ch:
             };
 
             Blockly.Python['set_bot_status'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const status = Blockly.Python.valueToCode(block, 'STATUS', Blockly.Python.ORDER_NONE) || '"Bot"';
                 const type = block.getFieldValue('TYPE');
                 let activityCode = `discord.Game(name=${status})`;
@@ -1202,14 +1160,12 @@ if _ch:
             };
 
             Blockly.Python['wait_seconds'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const sec = Blockly.Python.valueToCode(block, 'SECONDS', Blockly.Python.ORDER_NONE) || '1';
                 return `await asyncio.sleep(${sec})\n`;
             };
 
             // --- JSON Data Generators ---
             Blockly.Python['save_to_json'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const key = Blockly.Python.valueToCode(block, 'KEY', Blockly.Python.ORDER_NONE) || '"key"';
                 const value = Blockly.Python.valueToCode(block, 'VALUE', Blockly.Python.ORDER_NONE) || 'None';
                 return `_save_data(${key}, ${value})\n`;
@@ -1257,7 +1213,6 @@ ${embedVarName} = discord.Embed(title="No Title", description="...", color=0x349
             };
 
             Blockly.Python['kick_user'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const user = Blockly.Python.valueToCode(block, 'USER_ID', Blockly.Python.ORDER_NONE) || '0';
                 const reason = Blockly.Python.valueToCode(block, 'REASON', Blockly.Python.ORDER_NONE) || 'None';
                 return `
@@ -1268,7 +1223,6 @@ if 'ctx' in locals() and ctx.guild:
             };
             
             Blockly.Python['ban_user'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const user = Blockly.Python.valueToCode(block, 'USER_ID', Blockly.Python.ORDER_NONE) || '0';
                 const reason = Blockly.Python.valueToCode(block, 'REASON', Blockly.Python.ORDER_NONE) || 'None';
                 return `
@@ -1279,7 +1233,6 @@ if 'ctx' in locals() and ctx.guild:
             };
             
             Blockly.Python['timeout_user'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const user = Blockly.Python.valueToCode(block, 'USER_ID', Blockly.Python.ORDER_NONE) || '0';
                 const mins = Blockly.Python.valueToCode(block, 'MINUTES', Blockly.Python.ORDER_NONE) || '5';
                 return `
@@ -1291,7 +1244,6 @@ if 'ctx' in locals() and ctx.guild:
             };
 
             Blockly.Python['add_user_role'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const user = Blockly.Python.valueToCode(block, 'USER_ID', Blockly.Python.ORDER_NONE) || '0';
                 const role = Blockly.Python.valueToCode(block, 'ROLE_ID', Blockly.Python.ORDER_NONE) || '0';
                 return `
@@ -1303,7 +1255,6 @@ if 'ctx' in locals() and ctx.guild:
             };
 
             Blockly.Python['remove_user_role'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const user = Blockly.Python.valueToCode(block, 'USER_ID', Blockly.Python.ORDER_NONE) || '0';
                 const role = Blockly.Python.valueToCode(block, 'ROLE_ID', Blockly.Python.ORDER_NONE) || '0';
                 return `
@@ -1315,7 +1266,6 @@ if 'ctx' in locals() and ctx.guild:
             };
 
             Blockly.Python['create_role'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const name = Blockly.Python.valueToCode(block, 'NAME', Blockly.Python.ORDER_NONE) || '"New Role"';
                 return `
 if 'ctx' in locals() and ctx.guild:
@@ -1324,7 +1274,6 @@ if 'ctx' in locals() and ctx.guild:
             };
             
             Blockly.Python['change_nickname'] = function(block) {
-                if (isOrphan(block)) return ORPHAN_WARNING;
                 const user = Blockly.Python.valueToCode(block, 'USER_ID', Blockly.Python.ORDER_NONE) || '0';
                 const name = Blockly.Python.valueToCode(block, 'NAME', Blockly.Python.ORDER_NONE) || '"New Nick"';
                 return `
@@ -1541,8 +1490,10 @@ ${returnCode.trimEnd()}
             if (!workspace) return '';
             let rawCode = Blockly.Python.workspaceToCode(workspace);
             
-            // Revert code cleaning to avoid IndentationError
-            let cleanedCode = rawCode.trim();
+            const rootIndent = Blockly.Python.INDENT;
+            let cleanedCode = rawCode.split('\n')
+                .map(line => line.startsWith(rootIndent) ? line.substring(rootIndent.length) : line)
+                .join('\n').trim();
 
             const boilerplate = `
 # 必要なライブラリのインポート
@@ -1555,10 +1506,6 @@ import datetime
 import math
 import json
 import os
-
-# --- 設定 (ここでバージョンを一元管理) ---
-BOT_VERSION = "1.0.0" 
-# ------------------------------------
 
 intents = discord.Intents.default()
 intents.message_content = True 
@@ -1594,7 +1541,7 @@ def _get_data(key):
 ${cleanedCode}
 # --------------------------
 
-# bot.run('TOKEN') # 実行時はここにTokenを入れてください
+bot.run('TOKEN') # 実行時はここにTokenを入れてください
 `;
             return boilerplate.trim();
         };
