@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord Bot Builder (Public Edition)</title>
+    <title>Easy Discord Bot Builder v4</title>
+    
+    <!-- Favicon (SVG Data URI) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='16' fill='%234f46e5' /%3E%3Ccircle cx='22' cy='26' r='6' fill='white' /%3E%3Ccircle cx='42' cy='26' r='6' fill='white' /%3E%3Cpath d='M20 42 Q32 52 44 42' stroke='white' stroke-width='4' fill='none' stroke-linecap='round' /%3E%3C/svg%3E">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -131,8 +135,8 @@
                 <i data-lucide="bot" class="w-6 h-6 text-white"></i>
             </div>
             <div>
-                <h1 class="text-xl font-bold text-gray-800 dark:text-white leading-tight">Discord Bot Builder</h1>
-                <p class="text-xs font-medium text-indigo-600 dark:text-indigo-400">Public Edition (Python)</p>
+                <h1 class="text-xl font-bold text-gray-800 dark:text-white leading-tight">Easy Discord Bot Builder v4</h1>
+                <p class="text-xs font-medium text-indigo-600 dark:text-indigo-400">create by himais0giiiin!</p>
             </div>
         </div>
 
@@ -177,7 +181,7 @@
             
             <category name="情報取得" colour="#8e44ad">
                 <block type="get_user_info"></block>
-                <block type="get_member_detail"></block> <!-- NEW: 詳細情報 -->
+                <block type="get_member_detail"></block>
                 <block type="member_has_role"></block>
                 <block type="get_channel_info"></block>
                 <block type="get_server_info"></block>
@@ -189,7 +193,7 @@
                 <block type="defer_reply"></block>
                 <block type="send_channel_message"></block>
                 <block type="edit_reply"></block>
-                <block type="edit_message_by_id"></block> <!-- NEW: IDで編集 -->
+                <block type="edit_message_by_id"></block>
                 <block type="delete_message"></block>
                 <block type="purge_messages"></block>
                 <block type="pin_message"></block>
@@ -197,9 +201,9 @@
                 <block type="create_thread"></block>
             </category>
             
-            <category name="高度な操作" colour="#535c68"> <!-- NEW CATEGORY -->
-                <block type="wait_for_message"></block> <!-- NEW: 待機 -->
-                <block type="print_to_console"></block> <!-- NEW: ログ -->
+            <category name="高度な操作" colour="#535c68">
+                <block type="wait_for_message"></block>
+                <block type="print_to_console"></block>
             </category>
 
             <category name="チャンネル・ボイス" colour="#00a8ff">
@@ -272,7 +276,7 @@
                 <block type="text"></block>
                 <block type="text_join"></block>
                 <block type="text_length"></block>
-                <block type="text_replace"></block> <!-- NEW: 置換 -->
+                <block type="text_replace"></block>
                 <block type="text_charAt"></block>
                 <block type="text_print"></block>
             </category>
