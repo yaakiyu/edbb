@@ -55,3 +55,6 @@ cd easy-bdc-forked
 1. 開発者に金を貢ぎましょう。ドメイン代って高いんですよ。
 2. issue を送り付けましょう。仕事が増えます。
 3. 開発に協力してみましょう。
+
+ko-fiはこちら
+https://ko-fi.com/himais0giiiin
