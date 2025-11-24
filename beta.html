@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Easy Discord Bot Builder v5.3</title>
+    <title>Easy Discord Bot Builder v5.3.3</title>
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='16' fill='%236366f1' /%3E%3Cpath d='M20 42 Q32 52 44 42' stroke='white' stroke-width='4' fill='none' stroke-linecap='round' /%3E%3Ccircle cx='22' cy='26' r='6' fill='white' /%3E%3Ccircle cx='42' cy='26' r='6' fill='white' /%3E%3C/svg%3E">
 
@@ -249,7 +249,7 @@
             <div class="flex flex-col">
                 <h1 class="text-xl font-bold text-slate-900 dark:text-white leading-tight tracking-tight flex items-center gap-3">
                     Easy Discord Bot Builder 
-                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-mono font-bold">v5.3</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-mono font-bold">v5.3.3</span>
                 </h1>
                 <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
                     Create by himais0giiiin!
@@ -621,11 +621,6 @@
             Blockly.Blocks['create_thread'] = { init: function() { this.appendValueInput("NAME").setCheck("String").appendField("🧵 スレッドを作成（名前"); this.appendDummyInput().appendField("）"); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour(160); } };
             Blockly.Blocks['wait_for_message'] = { init: function() { this.appendValueInput("TIMEOUT").setCheck("Number").appendField("⏳ 返信を待つ (最大"); this.appendDummyInput().appendField("秒)"); this.setOutput(true, "String"); this.setColour(290); } };
             Blockly.Blocks['print_to_console'] = { init: function() { this.appendValueInput("TEXT").setCheck(null).appendField("🖨️ コンソールに表示"); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour(160); } };
-            Blockly.Blocks['json_load'] = { init: function() { this.appendValueInput("FILENAME").setCheck("String").appendField("📂 JSONファイルを読み込む ("); this.appendDummyInput().appendField(")"); this.setOutput(true, null); this.setColour(30); } };
-            Blockly.Blocks['json_save'] = { init: function() { this.appendValueInput("DATA").setCheck(null).appendField("💾 データを保存: "); this.appendValueInput("FILENAME").setCheck("String").appendField(" ファイル名("); this.appendDummyInput().appendField(")"); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour(30); } };
-            Blockly.Blocks['dict_create'] = { init: function() { this.appendDummyInput().appendField("📦 空の辞書(データ)を作成"); this.setOutput(true, null); this.setColour(30); } };
-            Blockly.Blocks['dict_get'] = { init: function() { this.appendValueInput("DICT").setCheck(null).appendField("辞書"); this.appendValueInput("KEY").setCheck("String").appendField("からキー"); this.appendDummyInput().appendField("の値を取得"); this.setOutput(true, null); this.setColour(30); } };
-            Blockly.Blocks['dict_set'] = { init: function() { this.appendValueInput("DICT").setCheck(null).appendField("辞書"); this.appendValueInput("KEY").setCheck("String").appendField("のキー"); this.appendValueInput("VALUE").setCheck(null).appendField("に値"); this.appendDummyInput().appendField("を設定"); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour(30); } };
             Blockly.Blocks['join_voice_channel'] = { init: function() { this.appendDummyInput().appendField("🔊 実行者のボイスチャンネルに参加"); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour(340); } };
             Blockly.Blocks['leave_voice_channel'] = { init: function() { this.appendDummyInput().appendField("🔇 ボイスチャンネルから切断"); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour(340); } };
             Blockly.Blocks['create_text_channel'] = { init: function() { this.appendValueInput("NAME").setCheck("String").appendField("📁 テキストチャンネル作成"); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour(340); } };
@@ -753,11 +748,13 @@
                 let line = lines[i];
                 if (line.includes('# BUTTON_EVENT:')) {
                     currentEventName = line.split(':')[1].trim();
-                    componentEvents += `        if interaction.data.get('custom_id') == '${currentEventName}':\n            await on_button_${currentEventName}(interaction)\n`;
+                    // FIXED: Increased indentation to 12 spaces for if, 16 for await
+                    componentEvents += `            if interaction.data.get('custom_id') == '${currentEventName}':\n                await on_button_${currentEventName}(interaction)\n`;
                     filteredLines.push(line); // Keep definition
                 } else if (line.includes('# MODAL_EVENT:')) {
                     currentEventName = line.split(':')[1].trim();
-                    modalEvents += `        if interaction.data.get('custom_id') == '${currentEventName}':\n            await on_modal_${currentEventName}(interaction)\n`;
+                    // FIXED: Increased indentation to 12 spaces for if, 16 for await
+                    modalEvents += `            if interaction.data.get('custom_id') == '${currentEventName}':\n                await on_modal_${currentEventName}(interaction)\n`;
                     filteredLines.push(line);
                 } else {
                     filteredLines.push(line);
@@ -765,6 +762,11 @@
             }
             
             rawCode = filteredLines.join('\n');
+
+            // --- Robust Fallback for Empty Events ---
+            // If there are no events, use 'pass' with correct indentation (12 spaces)
+            if (!componentEvents.trim()) componentEvents = '            pass';
+            if (!modalEvents.trim()) modalEvents = '            pass';
 
             // --- Optimized Boilerplate ---
             const boilerplate = `
@@ -831,9 +833,9 @@ class EasyModal(discord.ui.Modal):
 async def on_interaction(interaction):
     try:
         if interaction.type == discord.InteractionType.component:
-${componentEvents || '            pass'}
+${componentEvents}
         elif interaction.type == discord.InteractionType.modal_submit:
-${modalEvents || '            pass'}
+${modalEvents}
     except Exception as e:
         print(f"Interaction Error: {e}")
 
