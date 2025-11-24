@@ -29,7 +29,80 @@ Blockly.Blocks['on_command_executed'] = {
       .appendField('を使われたとき');
     this.appendStatementInput('DO').setCheck(null).appendField('実行する処理');
     this.setColour(230);
+    this.setMutator(new Blockly.Mutator(['slash_command_arg_container']));
+    this.arguments_ = [];
   },
+  decompose: function(workspace) {
+    var containerBlock = workspace.newBlock('slash_command_arg_container');
+    containerBlock.initSvg();
+    var connection = containerBlock.getInput('STACK').connection;
+    for (var i = 0; i < this.arguments_.length; i++) {
+      var itemBlock = workspace.newBlock('slash_command_arg');
+      itemBlock.initSvg();
+      itemBlock.setFieldValue(this.arguments_[i].name, 'ARG_NAME');
+      itemBlock.setFieldValue(this.arguments_[i].type, 'ARG_TYPE');
+      connection.connect(itemBlock.previousConnection);
+      connection = itemBlock.nextConnection;
+    }
+    return containerBlock;
+  },
+  compose: function(containerBlock) {
+    this.arguments_ = [];
+    var itemBlock = containerBlock.getInputTargetBlock('STACK');
+    while (itemBlock) {
+      var argName = itemBlock.getFieldValue('ARG_NAME');
+      var argType = itemBlock.getFieldValue('ARG_TYPE');
+      this.arguments_.push({name: argName, type: argType});
+      itemBlock = itemBlock.nextConnection &&
+          itemBlock.nextConnection.targetBlock();
+    }
+    this.updateShape_();
+  },
+  saveConnections: function(containerBlock) {
+    // NOP
+  },
+  updateShape_: function() {
+    for (let i = 0; this.getInput('ARG' + i); i++) {
+      this.removeInput('ARG' + i);
+    }
+    for (let i = 0; i < this.arguments_.length; i++) {
+      this.appendDummyInput('ARG' + i)
+          .appendField(this.arguments_[i].name + ' (' + this.arguments_[i].type + ')');
+    }
+    this.moveInputBefore('DO', null);
+  }
+};
+
+Blockly.Blocks['slash_command_arg_container'] = {
+  init: function() {
+    this.appendDummyInput().appendField("引数");
+    this.appendStatementInput('STACK');
+    this.setColour(230);
+    this.setTooltip("引数をここに追加します。");
+    this.contextMenu = false;
+  }
+};
+
+Blockly.Blocks['slash_command_arg'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField("引数名")
+        .appendField(new Blockly.FieldTextInput("name"), "ARG_NAME")
+        .appendField("タイプ")
+        .appendField(new Blockly.FieldDropdown([
+          ["文字列", "str"],
+          ["数値", "int"],
+          ["真偽値", "bool"],
+          ["ユーザー", "user"],
+          ["チャンネル", "channel"],
+          ["ロール", "role"]
+        ]), "ARG_TYPE");
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(230);
+    this.setTooltip("スラッシュコマンドに引数を追加します。");
+    this.contextMenu = false;
+  }
 };
 Blockly.Blocks['prefix_command'] = {
   init: function () {
@@ -39,7 +112,68 @@ Blockly.Blocks['prefix_command'] = {
       .appendField('を実行したとき');
     this.appendStatementInput('DO').setCheck(null).appendField('実行する処理');
     this.setColour(230);
+    this.setMutator(new Blockly.Mutator(['prefix_command_arg_container']));
+    this.arguments_ = [];
   },
+  decompose: function(workspace) {
+    var containerBlock = workspace.newBlock('prefix_command_arg_container');
+    containerBlock.initSvg();
+    var connection = containerBlock.getInput('STACK').connection;
+    for (var i = 0; i < this.arguments_.length; i++) {
+      var itemBlock = workspace.newBlock('prefix_command_arg');
+      itemBlock.initSvg();
+      itemBlock.setFieldValue(this.arguments_[i], 'ARG_NAME');
+      connection.connect(itemBlock.previousConnection);
+      connection = itemBlock.nextConnection;
+    }
+    return containerBlock;
+  },
+  compose: function(containerBlock) {
+    this.arguments_ = [];
+    var itemBlock = containerBlock.getInputTargetBlock('STACK');
+    while (itemBlock) {
+      this.arguments_.push(itemBlock.getFieldValue('ARG_NAME'));
+      itemBlock = itemBlock.nextConnection &&
+          itemBlock.nextConnection.targetBlock();
+    }
+    this.updateShape_();
+  },
+  saveConnections: function(containerBlock) {
+    // NOP
+  },
+  updateShape_: function() {
+    for (let i = 0; this.getInput('ARG' + i); i++) {
+      this.removeInput('ARG' + i);
+    }
+    for (let i = 0; i < this.arguments_.length; i++) {
+      this.appendDummyInput('ARG' + i)
+          .appendField(this.arguments_[i]);
+    }
+    this.moveInputBefore('DO', null);
+  }
+};
+
+Blockly.Blocks['prefix_command_arg_container'] = {
+  init: function() {
+    this.appendDummyInput().appendField("引数");
+    this.appendStatementInput('STACK');
+    this.setColour(230);
+    this.setTooltip("引数をここに追加します。");
+    this.contextMenu = false;
+  }
+};
+
+Blockly.Blocks['prefix_command_arg'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField("引数名")
+        .appendField(new Blockly.FieldTextInput("name"), "ARG_NAME");
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(230);
+    this.setTooltip("プレフィックスコマンドに引数を追加します。");
+    this.contextMenu = false;
+  }
 };
 Blockly.Blocks['get_command_arg'] = {
   init: function () {
@@ -530,7 +664,29 @@ Blockly.JavaScript['get_message_content'] = function (block) {
 Blockly.Python['on_command_executed'] = function (block) {
   const commandName = block.getFieldValue('COMMAND_NAME').toLowerCase();
   const branch = getBranchCode(block, 'DO');
-  return `\n@bot.tree.command(name="${commandName}", description="${commandName} command")\nasync def ${commandName}_cmd(interaction: discord.Interaction):\n    ctx = interaction\n    user = interaction.user\n${branch.trimEnd()}\n`;
+  
+  let args = [];
+  let describes = [];
+  for (let i = 0; i < block.arguments_.length; i++) {
+    const arg = block.arguments_[i];
+    const argName = arg.name.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const argType = arg.type;
+    let pyType = 'str';
+    switch(argType) {
+      case 'int': pyType = 'int'; break;
+      case 'bool': pyType = 'bool'; break;
+      case 'user': pyType = 'discord.User'; break;
+      case 'channel': pyType = 'discord.TextChannel'; break;
+      case 'role': pyType = 'discord.Role'; break;
+    }
+    args.push(`${argName}: ${pyType}`);
+    describes.push(`@app_commands.describe(${argName}='${arg.name}')`);
+  }
+  
+  const describeLines = describes.join('\\n');
+  const argsLine = args.length > 0 ? ', ' + args.join(', ') : '';
+
+  return `\n@bot.tree.command(name="${commandName}", description="${commandName} command")\n${describeLines}\nasync def ${commandName}_cmd(interaction: discord.Interaction${argsLine}):\n    ctx = interaction\n    user = interaction.user\n${branch.trimEnd()}\n`;
 };
 Blockly.JavaScript['on_command_executed'] = function (block) {
   const commandName = block.getFieldValue('COMMAND_NAME').toLowerCase();
@@ -541,7 +697,15 @@ Blockly.JavaScript['on_command_executed'] = function (block) {
 Blockly.Python['prefix_command'] = function (block) {
   const commandName = block.getFieldValue('COMMAND_NAME').replace(/^[!~#&?]/, '');
   const branch = getBranchCode(block, 'DO');
-  return `\n@bot.command(name='${commandName}')\nasync def ${commandName}_cmd(ctx):\n    user = ctx.author\n${branch.trimEnd()}\n`;
+
+  let args = [];
+  for (let i = 0; i < block.arguments_.length; i++) {
+    const argName = block.arguments_[i].toLowerCase().replace(/[^a-z0-9_]/g, '');
+    args.push(argName);
+  }
+  const argsLine = args.length > 0 ? ', ' + args.join(', ') : '';
+  
+  return `\n@bot.command(name='${commandName}')\nasync def ${commandName}_cmd(ctx${argsLine}):\n    user = ctx.author\n${branch.trimEnd()}\n`;
 };
 Blockly.JavaScript['prefix_command'] = function (block) {
   const commandName = block.getFieldValue('COMMAND_NAME');
@@ -550,7 +714,7 @@ Blockly.JavaScript['prefix_command'] = function (block) {
 };
 Blockly.Python['get_command_arg'] = function (block) {
   const argName = block.getFieldValue('ARG_NAME');
-  return [`# Argument '${argName}' needed`, Blockly.Python.ORDER_ATOMIC];
+  return [argName, Blockly.Python.ORDER_ATOMIC];
 };
 Blockly.JavaScript['get_command_arg'] = function (block) {
   const argName = block.getFieldValue('ARG_NAME');
