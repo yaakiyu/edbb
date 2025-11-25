@@ -13,6 +13,26 @@ const getBranch = (block, key = "DO") => {
   return code && code.trim() ? code : `${Blockly.Python.INDENT}pass\n`;
 };
 
+const toPyBool = value => {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  if (trimmed === "TRUE") return "True";
+  if (trimmed === "FALSE") return "False";
+  return value;
+};
+
+const isEmbedLike = value => {
+  const trimmed = (value || "").trim();
+  return trimmed.startsWith("discord.Embed") || trimmed.startsWith("Embed(");
+};
+
+const messagePlaceholderBlocks = new Set([
+  "reply_message",
+  "send_dm",
+  "edit_reply",
+  "send_channel_message",
+]);
+
 const resolvePlaceholders = (block, schema) => {
   const out = {};
   for (const key of schema.placeholders || []) {
@@ -20,7 +40,12 @@ const resolvePlaceholders = (block, schema) => {
       out[key] = getBranch(block);
       continue;
     }
-    out[key] = getValue(block, key, getField(block, key) ?? "");
+    const raw = getValue(block, key, getField(block, key) ?? "");
+    if (messagePlaceholderBlocks.has(block.type) && key === "MESSAGE") {
+      out[key] = isEmbedLike(raw) ? `embed=${raw}` : `content=${raw}`;
+      continue;
+    }
+    out[key] = toPyBool(raw);
   }
   return out;
 };

@@ -82,15 +82,15 @@
     "description": "メッセージへの返信 + Interaction 対応",
     "category": "message",
     "return": "multiline",
-    "placeholders": ["CONTENT", "EPHEMERAL"],
-    "template": "\nif 'ctx' in locals():\n    if isinstance(ctx, discord.Interaction):\n        if ctx.response.is_done():\n            await ctx.followup.send({{CONTENT}}, ephemeral={{EPHEMERAL}})\n        else:\n            await ctx.response.send_message({{CONTENT}}, ephemeral={{EPHEMERAL}})\n    elif isinstance(ctx, commands.Context):\n        await ctx.send({{CONTENT}})\n    elif isinstance(ctx, discord.Message):\n        await ctx.reply({{CONTENT}})\n"
+    "placeholders": ["MESSAGE", "EPHEMERAL"],
+    "template": "\nif 'ctx' in locals():\n    if isinstance(ctx, discord.Interaction):\n        if ctx.response.is_done():\n            await ctx.followup.send({{MESSAGE}}, ephemeral={{EPHEMERAL}})\n        else:\n            await ctx.response.send_message({{MESSAGE}}, ephemeral={{EPHEMERAL}})\n    elif isinstance(ctx, commands.Context):\n        await ctx.send({{MESSAGE}})\n    elif isinstance(ctx, discord.Message):\n        await ctx.reply({{MESSAGE}})\n"
   },
   "send_dm": {
     "description": "DM送信",
     "category": "message",
     "return": "multiline",
-    "placeholders": ["USER_ID", "CONTENT"],
-    "template": "\n_u_dm = bot.get_user(int({{USER_ID}})) or await bot.fetch_user(int({{USER_ID}}))\nif _u_dm:\n    await _u_dm.send({{CONTENT}})\n"
+    "placeholders": ["USER_ID", "MESSAGE"],
+    "template": "\n_u_dm = bot.get_user(int({{USER_ID}})) or await bot.fetch_user(int({{USER_ID}}))\nif _u_dm:\n    await _u_dm.send({{MESSAGE}})\n"
   },
   "defer_reply": {
     "description": "応答延期（defer）",
@@ -103,15 +103,15 @@
     "description": "Interaction の返信編集",
     "category": "message",
     "return": "multiline",
-    "placeholders": ["CONTENT"],
-    "template": "\nif 'ctx' in locals() and isinstance(ctx, discord.Interaction):\n    await ctx.edit_original_response({{CONTENT}})\n"
+    "placeholders": ["MESSAGE"],
+    "template": "\nif 'ctx' in locals() and isinstance(ctx, discord.Interaction):\n    await ctx.edit_original_response({{MESSAGE}})\n"
   },
   "send_channel_message": {
     "description": "チャンネルにメッセージ送信",
     "category": "message",
     "return": "multiline",
-    "placeholders": ["CHANNEL_ID", "CONTENT"],
-    "template": "\n_ch_id = int({{CHANNEL_ID}}) if str({{CHANNEL_ID}}).isdigit() else 0\n_channel = bot.get_channel(_ch_id)\nif _channel:\n    await _channel.send({{CONTENT}})\n"
+    "placeholders": ["CHANNEL_ID", "MESSAGE"],
+    "template": "\n_ch_id = int({{CHANNEL_ID}}) if str({{CHANNEL_ID}}).isdigit() else 0\n_channel = bot.get_channel(_ch_id)\nif _channel:\n    await _channel.send({{MESSAGE}})\n"
   },
 
   "delete_message": {
@@ -159,7 +159,7 @@
     "category": "async",
     "return": "expression",
     "placeholders": ["TIMEOUT"],
-    "template": "(await bot.wait_for('message', check=lambda m: m.channel == ctx.channel and m.author == user, timeout={{TIMEOUT}})).content"
+    "template": "((await bot.wait_for('message', check=lambda m: m.channel == ctx.channel and m.author == user, timeout={{TIMEOUT}})).content if 'ctx' in locals() and 'user' in locals() else None)"
   },
 
   "print_to_console": {
@@ -414,7 +414,7 @@
     "category": "modal",
     "return": "multiline",
     "placeholders": ["TITLE", "CUSTOM_ID", "INPUTS"],
-    "template": "\nif isinstance(ctx, discord.Interaction):\n    await ctx.response.send_modal(EasyModal(title=\"{{TITLE}}\", custom_id=\"{{CUSTOM_ID}}\", inputs={{INPUTS}}))\n"
+    "template": "\nif 'ctx' in locals() and isinstance(ctx, discord.Interaction):\n    await ctx.response.send_modal(EasyModal(title=\"{{TITLE}}\", custom_id=\"{{CUSTOM_ID}}\", inputs={{INPUTS}}))\n"
   },
 
   "on_modal_submit": {
@@ -581,7 +581,7 @@
     "category": "interaction",
     "return": "multiline",
     "placeholders": ["MESSAGE", "LABEL", "CUSTOM_ID"],
-    "template": "\nview = discord.ui.View()\nview.add_item(discord.ui.Button(label=\"{{LABEL}}\", custom_id=\"{{CUSTOM_ID}}\"))\nawait ctx.send(content={{MESSAGE}}, view=view)\n"
+    "template": "\nview = discord.ui.View()\nview.add_item(discord.ui.Button(label=\"{{LABEL}}\", custom_id=\"{{CUSTOM_ID}}\"))\nif 'ctx' in locals():\n    await ctx.send(content={{MESSAGE}}, view=view)\n"
   },
 
   "controls_if_inline": {

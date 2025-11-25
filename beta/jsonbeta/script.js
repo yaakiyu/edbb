@@ -79,7 +79,7 @@ const generatePythonCode = () => {
   const code = `
 import discord, random, asyncio, datetime, json, os
 from discord.ext import commands
-
+import os
 intents = discord.Intents.default()
 intents.message_content = intents.members = intents.voice_states = True
 
@@ -104,7 +104,7 @@ async def on_interaction(interaction):
 ${rawCode}
 # ユーザー操作
 if __name__ == "__main__":
-    bot.run('TOKEN') # 実行時はここにTokenを入れてください!
+    bot.run(os.getenv('TOKEN'))
 `;
 
   return code.replace(/\n{3,}/g, "\n").trim();
@@ -367,13 +367,17 @@ const initializeApp = (Blocks) => {
     }, 2000);
   });
   downloadCodeBtn.addEventListener("click", () => {
-    const blob = new Blob([codeOutput.textContent], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `bot-project.py`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const zip = new JSZip();
+    zip.file("bot-project.py", codeOutput.textContent);
+    zip.file(".env", "TOKEN=YOUR_TOKEN\n");
+    zip.generateAsync({ type: "blob" }).then((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bot-project.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
   });
 
 };
