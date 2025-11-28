@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Easy Discord Bot Builder v5.3.3</title>
+    <title>Easy Discord Bot Builder</title>
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='16' fill='%236366f1' /%3E%3Cpath d='M20 42 Q32 52 44 42' stroke='white' stroke-width='4' fill='none' stroke-linecap='round' /%3E%3Ccircle cx='22' cy='26' r='6' fill='white' /%3E%3Ccircle cx='42' cy='26' r='6' fill='white' /%3E%3C/svg%3E">
 
@@ -25,7 +25,7 @@
                         }
                     },
                     fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                        sans: ['Plus Jakarta Sans', 'Noto Sans JP', 'Inter', 'sans-serif'],
                         mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace'],
                     },
                     boxShadow: {
@@ -36,12 +36,14 @@
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Google Fontsに日本語フォント(Noto Sans JP)を追加 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
     <!-- Blockly -->
     <script src="https://unpkg.com/blockly@9.0.0/blockly.min.js"></script>
     <script src="https://unpkg.com/blockly@9.0.0/python_compressed.js"></script>
-    <script src="https://unpkg.com/blockly@9.0.0/javascript_compressed.js"></script>
     <script src="https://unpkg.com/blockly@9.0.0/msg/ja.js"></script>
     
     <!-- Icons -->
@@ -53,11 +55,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/python.min.js"></script>
 
     <link rel="stylesheet" href="style.css">
-    <!-- OGP -->
     <meta property="og:title" content="Easy Discord Bot Builder (EDBB)">
     <meta property="og:site_name" content="Easy Discord Bot Builder(EDBB)">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://himais0giiiin.com/editor/">
+    <meta property="og:url" content="https://himais0giiiin.com/beta/">
     <meta property="og:description" content="ブラウザ上でブロックを組み合わせて、誰でも簡単に Discord Bot を作成できるビジュアルプログラミングツール。全て無料。">
     <meta property="og:image" content="https://himais0giiiin.com/static/img.svg">
 </head>
@@ -75,7 +76,7 @@
             <div class="flex flex-col">
                 <h1 class="text-xl font-bold text-slate-900 dark:text-white leading-tight tracking-tight flex items-center gap-3">
                     Easy Discord Bot Builder 
-                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-mono font-bold">v5.3.3</span>
+                    <!-- <span class="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-mono font-bold">BETA</span> -->
                 </h1>
                 <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
                     Create by himais0giiiin!
@@ -127,11 +128,7 @@
             <!-- Generate Code Button -->
             <button id="showCodeBtn" class="ml-2 group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-white transition-all duration-200 bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 active:scale-95 shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40">
                 <i data-lucide="code-2" class="w-4 h-4 transition-transform group-hover:rotate-6"></i>
-                <span class="hidden sm:inline">Pyコード生成</span>
-            </button>
-            <button id="showJsCodeBtn" class="ml-2 group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-white transition-all duration-200 bg-purple-600 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-600 active:scale-95 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40">
-                <i data-lucide="code-2" class="w-4 h-4 transition-transform group-hover:rotate-6"></i>
-                <span class="hidden sm:inline">JSコード生成</span>
+                <span class="hidden sm:inline">コード生成</span>
             </button>
         </div>
     </header>
@@ -170,6 +167,8 @@
             <category name="イベント" colour="#e67e22">
                 <block type="on_ready"></block>
                 <block type="on_message_create"></block>
+                <block type="on_member_join"></block>
+                <block type="on_member_remove"></block>
                 <block type="on_command_executed"></block>
                 <block type="prefix_command"></block>
                 <block type="get_message_content"></block>
@@ -200,6 +199,7 @@
 
             <category name="メッセージ" colour="#3498db">
                 <block type="reply_message"></block>
+                <block type="send_dm"></block>
                 <block type="defer_reply"></block>
                 <block type="send_channel_message"></block>
                 <block type="edit_reply"></block>
@@ -226,6 +226,7 @@
 
             <category name="チャンネル・ボイス" colour="#00a8ff">
                 <block type="join_voice_channel"></block>
+                <block type="play_audio_file"></block>
                 <block type="leave_voice_channel"></block>
                 <block type="create_text_channel"></block>
                 <block type="delete_channel"></block>
@@ -290,7 +291,7 @@
                 <block type="random_integer"></block>
             </category>
 
-            <category name="文字列とコンソール" colour="#5ba58c">
+            <category name="文字列" colour="#5ba58c">
                 <block type="text"></block>
                 <block type="text_join"></block>
                 <block type="text_length"></block>
@@ -328,21 +329,16 @@
                     </h3>
                     <ol class="space-y-2 text-sm text-slate-600 dark:text-slate-400 list-decimal list-inside font-medium">
                         <li>以下のコードを <code class="px-1.5 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 font-mono">bot.py</code> という名前で保存します。</li>
-                        <li>ターミナルで <code class="px-1.5 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 font-mono select-all">pip install discord.py</code> を実行します。</li>
+                        <li>ターミナルで <code class="px-1.5 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 font-mono select-all">pip install discord.py[voice]</code> を実行します (音声機能のため[voice]推奨)。</li>
                         <li><code class="px-1.5 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 font-mono select-all">python bot.py</code> を実行してBotを起動します。</li>
+                        <li>※音声再生にはシステムに <a href="https://ffmpeg.org/" target="_blank" class="text-indigo-500 hover:underline">FFmpeg</a> がインストールされている必要があります。</li>
                     </ol>
                 </div>
 
                 <div class="relative group rounded-xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800">
-                    <div class="absolute top-3 right-3 z-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 flex items-center gap-2">
+                    <div class="absolute top-3 right-3 z-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                         <button id="copyCodeBtn" class="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-lg shadow-lg bg-indigo-600 hover:bg-indigo-500 border border-indigo-400 backdrop-blur-sm transition-all active:scale-95">
                             <i data-lucide="copy" class="w-3.5 h-3.5"></i> コピー
-                        </button>
-                        <button id="shareTwitterBtn" class="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-lg shadow-lg bg-black hover:bg-gray-800 border border-gray-600 backdrop-blur-sm transition-all active:scale-95">
-                            <i data-lucide="twitter" class="w-3.5 h-3.5"></i> シェア
-                        </button>
-                        <button id="saveFileBtn" class="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-lg shadow-lg bg-emerald-600 hover:bg-emerald-500 border border-emerald-400 backdrop-blur-sm transition-all active:scale-95">
-                            <i data-lucide="download" class="w-3.5 h-3.5"></i> 保存
                         </button>
                     </div>
                     <pre id="codeOutput" class="p-5 text-sm font-mono tab-4 bg-[#0f172a] text-[#e2e8f0] overflow-x-auto min-h-[300px]"></pre>
@@ -356,7 +352,6 @@
             </div>
         </div>
     </div>
-
     <script type="module" src="script.js"></script>
 </body>
 </html>

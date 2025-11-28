@@ -1,5 +1,6 @@
+/* 基本設定 & フォント */
 body {
-  font-family: "Plus Jakarta Sans", sans-serif;
+  font-family: "Plus Jakarta Sans", "Noto Sans JP", sans-serif;
   background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
   background-size: 24px 24px;
 }
@@ -94,7 +95,9 @@ body {
   background: #475569;
 }
 
-/* Blockly Styling Overrides */
+/* --- Blockly Toolbox Styling Fixes --- */
+
+/* ツールボックス全体の背景など */
 .blocklyToolboxDiv {
   background-color: rgba(248, 250, 252, 0.95) !important;
   backdrop-filter: blur(10px);
@@ -106,38 +109,53 @@ body {
   border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.blocklyTreeLabel {
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-weight: 600;
-  padding: 10px 0;
-  font-size: 0.9rem;
-  color: #475569;
-}
-
+/* カテゴリ行のレイアウト修正 (Flexbox化) */
 .blocklyTreeRow {
   height: 48px !important;
-  line-height: 48px !important;
-  padding-left: 20px !important;
+  padding-left: 12px !important; /* 左側の余白 */
   border-left: 4px solid transparent;
   margin-bottom: 4px;
   transition: all 0.2s ease;
   margin-right: 12px;
-  border-radius: 0 12px 12px 0;
+  border-radius: 0 8px 8px 0;
+  
+  /* Flexboxで垂直中央揃えを強制 */
+  display: flex !important;
+  align-items: center !important;
+  line-height: normal !important; /* line-height固定を解除 */
 }
 
+/* デフォルトの四角い色アイコンを非表示にする（border-leftで色を表現するため） */
+.blocklyTreeIcon {
+  display: none !important;
+}
+
+/* カテゴリラベルのスタイル */
+.blocklyTreeLabel {
+  font-family: "Plus Jakarta Sans", "Noto Sans JP", sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #475569;
+  padding: 0 !important; /* パディングは親要素で管理 */
+  margin-left: 8px; /* 左のボーダーとの距離 */
+}
+
+/* ホバー時のスタイル */
 .blocklyTreeRow:not(.blocklyTreeSelected):hover {
   background-color: #f1f5f9;
   border-left-color: #cbd5e1;
 }
+
+/* 選択時のスタイル */
 .blocklyTreeSelected {
   background-color: #e0e7ff !important;
   border-left-color: #6366f1 !important;
-  color: #4f46e5 !important;
 }
 .blocklyTreeSelected .blocklyTreeLabel {
   color: #4f46e5 !important;
 }
 
+/* ダークモード対応 */
 .dark .blocklyTreeLabel {
   color: #94a3b8;
 }
@@ -148,19 +166,30 @@ body {
 .dark .blocklyTreeSelected {
   background-color: #1e1b4b !important;
   border-left-color: #818cf8 !important;
-  color: #c7d2fe !important;
 }
 .dark .blocklyTreeSelected .blocklyTreeLabel {
   color: #c7d2fe !important;
 }
 
+/* セパレーター（区切り線）のスタイル */
+.blocklyTreeSeparator {
+  border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+  margin: 8px 16px 8px 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+.dark .blocklyTreeSeparator {
+  border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+/* フライアウト（パレット）の背景 */
 .blocklyFlyoutBackground {
   fill: #ffffff !important;
-  fill-opacity: 0.95;
+  fill-opacity: 0.98;
 }
 .dark .blocklyFlyoutBackground {
   fill: #0f172a !important;
-  fill-opacity: 0.95;
+  fill-opacity: 0.98;
 }
 
 /* モーダルアニメーション */
