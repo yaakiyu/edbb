@@ -340,18 +340,16 @@ export const initShareFeature = ({
     return data.url;
   };
 
-  // ワークスペースを短縮URL付きで共有できる文字列に変換
-  const generateShareUrl = async () => {
+  const buildShareUrl = (encoded) => `${getBaseShareUrl()}?${SHARE_QUERY_KEY}=${encoded}`;
+
+  const exportSharePayload = () => {
     if (!workspace || !storage) throw new Error('WORKSPACE_NOT_READY');
     const encoded = storage.exportMinified();
     if (!encoded) throw new Error('ENCODE_FAILED');
-    try {
-      return await createShortShareUrl(encoded);
-    } catch (error) {
-      console.error('Failed to create short share url', error);
-      showShareStatus('短縮URLの生成に失敗したため通常リンクを表示します', 'error');
-      return `${getBaseShareUrl()}?${SHARE_QUERY_KEY}=${encoded}`;
-    }
+    return {
+      encoded,
+      url: buildShareUrl(encoded),
+    };
   };
 
   // URLクエリに埋め込まれた共有データを適用
@@ -418,8 +416,23 @@ export const initShareFeature = ({
       shareBtn.disabled = true;
       shareBtn.setAttribute('aria-busy', 'true');
       try {
-        const shareUrl = await generateShareUrl();
-        toggleShareModal(true, shareUrl);
+        const { encoded, url } = exportSharePayload();
+        toggleShareModal(true, url);
+        try {
+          const shortUrl = await createShortShareUrl(encoded);
+          if (
+            shortUrl &&
+            shareModalInput &&
+            shareModal &&
+            !shareModal.classList.contains('hidden')
+          ) {
+            shareModalInput.value = shortUrl;
+            ensureUrlVisible();
+          }
+        } catch (error) {
+          console.error('Failed to create short share url', error);
+          showShareStatus('短縮URLの生成に失敗したため通常リンクを表示します', 'error');
+        }
       } catch (error) {
         console.error('Failed to generate share url', error);
         showShareStatus('共有リンクの生成に失敗しました', 'error');
