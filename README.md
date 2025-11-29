@@ -1,6 +1,5 @@
 <div align="center">
 
-
 <h1><img src="https://github.com/user-attachments/assets/85370508-c684-4084-b979-51e918d7e0e8" alt="EDBB Icon" style="width: 1em; height: 1em;"">Easy Discord Bot Builder (EDBB)</h1>
   
 ![EDBBCounter](https://count.getloli.com/@easybdc)
@@ -50,8 +49,8 @@
 リポジトリをクローンし、`index.html` をブラウザで開くだけで基本的な機能を利用できます。
 
 ```bash
-git clone https://github.com/yuz-mc/easy-bdc-forked.git
-cd easy-bdc-forked
+git clone https://github.com/himais0giiiin/easy-bdc.git
+cd easy-bdc
 # index.html をブラウザで開く
 ```
 
