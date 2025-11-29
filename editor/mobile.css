@@ -1,0 +1,21 @@
+.blocklyMobileInput {
+  color: transparent;
+  caret-color: black;
+  background: transparent;
+  border: none;
+  outline: none;
+  position: absolute;
+  z-index: 99999;
+}
+
+.blocklyMobileInput::selection {
+  background: transparent;
+}
+
+.blocklyMobileInput::target-text {
+  background: transparent;
+}
+
+.blocklyMobileInput::-internal-autofill-selected {
+  background: transparent;
+}
