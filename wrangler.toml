@@ -22,3 +22,7 @@ invocation_logs = true
 enabled = false
 persist = true
 head_sampling_rate = 1
+
+[[kv_namespaces]]
+binding = "SHORT_KV"
+id = "9a0530f63a9a4e6780f595b56d819b23"

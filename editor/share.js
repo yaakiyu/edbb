@@ -1,7 +1,7 @@
 // 共有機能全体で使う定数を定義
 const SHARE_QUERY_KEY = 'share';
 const SHARE_STATUS_SHOW_MS = 2500;
-const SHARE_SHORTENER_ENDPOINT = 'https://share.himais0giiiin.com/share/create';
+const SHARE_SHORTENER_ENDPOINT = '/share/create';
 const SHARE_IMPORT_SKIP_KEY = 'share_import_dialog_skip';
 const BLOCKLY_CAPTURE_EXTRA_CSS = [
   '.blocklyText { fill:#fff !important; }',
