@@ -277,6 +277,217 @@ class ShareThumbnailManager {
   }
 }
 
+// 閲覧ビューと編集ビュー間の履歴管理を担当するクラス
+class ShareHistoryManager {
+  // 依存（storage / viewState / notifier / URL生成関数）をまとめて受け取る
+  constructor({ storage, statusNotifier, viewStateController, buildShareUrl }) {
+    this.storage = storage;
+    this.statusNotifier = statusNotifier;
+    this.viewStateController = viewStateController;
+    this.buildShareUrl = typeof buildShareUrl === 'function' ? buildShareUrl : null;
+    this.initialShareEncoded = '';
+    this.historyEditSnapshot = '';
+    this.historyTrackingActive = false;
+    this.historyEditEntryCreated = false;
+    this.boundPopstateHandler = null;
+    this.boundPageShowHandler = null;
+    this.skipShareViewOnBack = false;
+    this.ensurePageShowListener();
+  }
+
+  // 閲覧ビュー用の履歴エントリを現在ページへマージ
+  registerShareView(encoded) {
+    if (!encoded || typeof window === 'undefined' || !window.history?.replaceState) {
+      return false;
+    }
+    try {
+      const shareUrl = this.resolveShareViewUrl(encoded);
+      window.history.replaceState({ shareHistoryMode: 'share-view' }, '', shareUrl);
+      this.initialShareEncoded = encoded;
+      this.historyTrackingActive = true;
+      this.skipShareViewOnBack = false;
+      this.ensureHistoryListener();
+      return true;
+    } catch (error) {
+      console.warn('Failed to register share view history entry', error);
+      this.reset();
+      return false;
+    }
+  }
+
+  // 編集開始時に pushState で差分エントリを積む
+  beginEditingTransition() {
+    if (
+      !this.historyTrackingActive ||
+      this.historyEditEntryCreated ||
+      typeof window === 'undefined' ||
+      !window.history?.pushState
+    ) {
+      return false;
+    }
+    try {
+      const editUrl = this.buildEditingHistoryUrl();
+      window.history.pushState({ shareHistoryMode: 'edit-view' }, '', editUrl);
+      this.historyEditEntryCreated = true;
+      this.skipShareViewOnBack = true;
+      this.ensureHistoryListener();
+      return true;
+    } catch (error) {
+      console.warn('Failed to register editing history entry', error);
+      return false;
+    }
+  }
+
+  // popstate リスナーを重複なく登録
+  ensureHistoryListener() {
+    if (this.boundPopstateHandler || typeof window === 'undefined') return;
+    this.boundPopstateHandler = (event) => this.handleHistoryNavigation(event);
+    window.addEventListener('popstate', this.boundPopstateHandler);
+  }
+
+  // BFCache 復帰などの pageshow を監視して閲覧ビューへ戻す
+  ensurePageShowListener() {
+    if (this.boundPageShowHandler || typeof window === 'undefined') return;
+    this.boundPageShowHandler = (event) => this.handlePageShow(event);
+    window.addEventListener('pageshow', this.boundPageShowHandler);
+  }
+
+  // popstate発火でモードごとの復元処理を振り分け
+  handleHistoryNavigation(event) {
+    if (!this.historyTrackingActive) return;
+    const mode = event.state?.shareHistoryMode;
+    if (mode === 'share-view') {
+      if (this.skipShareViewOnBack) {
+        this.skipShareViewOnBack = false;
+        window.history.back();
+        return;
+      }
+      this.restoreShareHistoryView();
+    } else if (mode === 'edit-view') {
+      this.restoreEditingHistoryView();
+    }
+  }
+
+  handlePageShow(event) {
+    if (!this.initialShareEncoded) return;
+    if (!this.wasHistoryNavigation(event)) return;
+    // 履歴経由で戻った場合は常に閲覧ビューとして再読込（自動保存を防ぐ）
+    this.historyEditEntryCreated = false;
+    this.historyEditSnapshot = '';
+    this.restoreShareHistoryView({ silent: true, skipSnapshot: true });
+  }
+
+  wasHistoryNavigation(event) {
+    if (event?.persisted) return true;
+    const perf = typeof performance !== 'undefined' ? performance : null;
+    const navEntries = perf?.getEntriesByType?.('navigation');
+    const latestNav = Array.isArray(navEntries) ? navEntries[0] : null;
+    if (latestNav?.type === 'back_forward') return true;
+    const legacyNav = perf?.navigation;
+    return !!legacyNav && legacyNav.type === legacyNav.TYPE_BACK_FORWARD;
+  }
+
+  // 編集ビューの現在状態を文字列でスナップショット化
+  captureEditingSnapshot() {
+    if (!this.storage || typeof this.storage.exportMinified !== 'function') {
+      return '';
+    }
+    try {
+      return this.storage.exportMinified() || '';
+    } catch (error) {
+      console.warn('Failed to export editing snapshot', error);
+      return '';
+    }
+  }
+
+  // 閲覧ビューへ戻る際に共有データを読み込み直す
+  restoreShareHistoryView({ silent = false, skipSnapshot = false } = {}) {
+    if (!this.initialShareEncoded) return;
+    if (!skipSnapshot) {
+      const snapshot = this.captureEditingSnapshot();
+      if (snapshot) {
+        this.historyEditSnapshot = snapshot;
+      }
+    }
+    try {
+      this.importEncodedPayload(this.initialShareEncoded);
+      this.viewStateController?.setMode(true);
+      if (!silent) {
+        this.statusNotifier?.show('共有ビューを再読込しました', 'info');
+      }
+    } catch (error) {
+      console.warn('Failed to restore share view state from history', error);
+      if (!silent) {
+        this.statusNotifier?.show('共有ビューへの復元に失敗しました', 'error');
+      }
+    }
+  }
+
+  // 編集ビューへ進む際に保存済みスナップショットを復元
+  restoreEditingHistoryView() {
+    if (this.historyEditSnapshot) {
+      try {
+        this.importEncodedPayload(this.historyEditSnapshot);
+      } catch (error) {
+        console.error('Failed to restore editing workspace from snapshot', error);
+        this.statusNotifier?.show('編集内容の復元に失敗しました', 'error');
+      }
+    }
+    this.viewStateController?.setMode(false);
+    this.statusNotifier?.show('編集ビューへ戻りました', 'info');
+    this.skipShareViewOnBack = true;
+  }
+
+  // storage へ Minified データを流し込む共通処理
+  importEncodedPayload(encoded) {
+    if (!encoded) {
+      throw new Error('ENCODE_MISSING');
+    }
+    if (!this.storage || typeof this.storage.importMinified !== 'function') {
+      throw new Error('STORAGE_NOT_READY');
+    }
+    if (!this.storage.importMinified(encoded)) {
+      throw new Error('LOAD_FAILED');
+    }
+  }
+
+  // 共有URLを生成（fallback は現在の location）
+  resolveShareViewUrl(encoded) {
+    if (this.buildShareUrl) {
+      return this.buildShareUrl(encoded);
+    }
+    const { origin, pathname } = window.location;
+    return `${origin}${pathname}?${SHARE_QUERY_KEY}=${encoded}`;
+  }
+
+  // share クエリを除いた編集用 URL を生成
+  buildEditingHistoryUrl() {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete(SHARE_QUERY_KEY);
+      const search = url.searchParams.toString();
+      const hash = url.hash || '';
+      return `${url.pathname}${search ? `?${search}` : ''}${hash}`;
+    } catch (error) {
+      console.warn('Failed to build editing history url', error);
+      return `${window.location.pathname}${window.location.hash || ''}`;
+    }
+  }
+
+  // popstate 監視や内部状態を初期化
+  reset() {
+    this.historyTrackingActive = false;
+    this.historyEditEntryCreated = false;
+    this.historyEditSnapshot = '';
+    this.initialShareEncoded = '';
+    this.skipShareViewOnBack = false;
+    if (this.boundPopstateHandler && typeof window !== 'undefined') {
+      window.removeEventListener('popstate', this.boundPopstateHandler);
+      this.boundPopstateHandler = null;
+    }
+  }
+}
+
 // 共有リンクモーダルの操作をまとめたクラス
 class ShareModalController {
   // コンストラクタで依存を受け取りDOMを取得
@@ -439,11 +650,18 @@ class ShareModalController {
 // 共有インポート確認モーダルの挙動をまとめたクラス
 class ShareImportModalController {
   // コンストラクタでDOMと依存を取得
-  constructor({ storage, statusNotifier, preferenceManager, viewStateController }) {
+  constructor({
+    storage,
+    statusNotifier,
+    preferenceManager,
+    viewStateController,
+    historyManager,
+  }) {
     this.storage = storage;
     this.statusNotifier = statusNotifier;
     this.preferenceManager = preferenceManager;
     this.viewStateController = viewStateController;
+    this.historyManager = historyManager;
     this.modalEl = document.getElementById('shareImportModal');
     this.confirmBtn = document.getElementById('shareImportConfirmBtn');
     this.cancelBtn = document.getElementById('shareImportCancelBtn');
@@ -521,9 +739,13 @@ class ShareImportModalController {
   finalize(applied) {
     return this.hideModal().then(() => {
       if (applied) {
+        const historyHandled =
+          this.historyManager?.beginEditingTransition?.() ?? false; // pushState 成功時はURLを書き換え済み
         this.pendingShareEncoded = '';
         this.viewStateController?.setMode(false);
-        this.cleanupShareQuery();
+        if (!historyHandled) {
+          this.cleanupShareQuery();
+        }
       }
     });
   }
@@ -550,7 +772,7 @@ class ShareImportModalController {
     }
     try {
       this.tryImportEncodedPayload(this.pendingShareEncoded);
-      this.statusNotifier?.show('共有ブロックの編集を開始します', 'success');
+      this.statusNotifier?.show('共有ブロックの編集を開始します。(Tips: ブラウザバックで元のブロックを復元できます)', 'success');
       await this.finalize(true);
     } catch (error) {
       console.warn('Failed to read shared layout', error);
@@ -580,6 +802,7 @@ class ShareImportModalController {
     this.pendingShareEncoded = encoded;
     try {
       this.tryImportEncodedPayload(encoded);
+      this.historyManager?.registerShareView(encoded); // 閲覧ビューのURLを履歴に固定
       this.viewStateController?.setMode(true);
       this.statusNotifier?.show('共有ブロックを閲覧専用で開いています', 'info');
       return true;
@@ -596,8 +819,9 @@ class ShareImportModalController {
   // クエリーパラメータからshareを削除
   cleanupShareQuery() {
     if (typeof window.history.replaceState === 'function') {
-      window.history.replaceState({}, '', window.location.pathname);
+      window.history.replaceState({}, '', window.location.pathname); // share= を即時除去
     }
+    this.historyManager?.reset?.(); // History API 非対応環境では内部状態も破棄
   }
 
   // storageへ共有データを書き戻す (失敗時は例外)
@@ -618,6 +842,12 @@ class ShareFeature {
     this.preferenceManager = new SharePreferenceManager();
     this.viewStateController = new ShareViewStateController(workspace);
     this.thumbnailManager = new ShareThumbnailManager(workspace, this.statusNotifier);
+    this.historyManager = new ShareHistoryManager({
+      storage,
+      statusNotifier: this.statusNotifier,
+      viewStateController: this.viewStateController,
+      buildShareUrl: (encoded) => this.buildShareUrl(encoded),
+    });
     this.shareModalController = new ShareModalController({
       statusNotifier: this.statusNotifier,
       thumbnailManager: this.thumbnailManager,
@@ -628,6 +858,7 @@ class ShareFeature {
       statusNotifier: this.statusNotifier,
       preferenceManager: this.preferenceManager,
       viewStateController: this.viewStateController,
+      historyManager: this.historyManager,
     });
   }
 
