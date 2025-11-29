@@ -413,7 +413,7 @@ const initializeApp = () => {
   });
 
   exportBtn.addEventListener('click', () => {
-    storage?.export();
+    storage?.exportFile();
   });
 
   // --- モーダル表示ロジック (アニメーション付き) ---

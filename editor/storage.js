@@ -23,8 +23,22 @@ export default class WorkspaceStorage {
     });
   }
 
+  // --- 公開API ---
+
+  // JSON文字列として取得（ダウンロードせずに利用）
+  exportText({ pretty = false } = {}) {
+    if (!this.#workspace) return '';
+    try {
+      const data = Blockly.serialization.workspaces.save(this.#workspace);
+      return JSON.stringify(data, null, pretty ? 2 : 0);
+    } catch (error) {
+      console.error('ワークスペースのシリアライズに失敗しました。', error);
+      return '';
+    }
+  }
+
   // JSONまたはXML文字列を判別して読み込む
-  #importText(text) {
+  importText(text) {
     if (WorkspaceStorage.#looksLikeXml(text)) {
       // 旧フォーマット(XML)の場合はDOM化して読込
       const dom = Blockly.Xml.textToDom(text);
@@ -41,13 +55,12 @@ export default class WorkspaceStorage {
     }
   }
 
-  // --- 公開API ---
-
   // 現在のワークスペース状態をlocalStorageへ保存
   save() {
+    const json = this.exportText({ pretty: false });
+    if (!json) return;
     try {
-      const data = Blockly.serialization.workspaces.save(this.#workspace);
-      localStorage.setItem(WorkspaceStorage.STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(WorkspaceStorage.STORAGE_KEY, json);
     } catch (error) {
       console.error('ワークスペースの保存に失敗しました。', error);
     }
@@ -58,7 +71,7 @@ export default class WorkspaceStorage {
     const stored = localStorage.getItem(WorkspaceStorage.STORAGE_KEY);
     if (!stored) return false;
     try {
-      if (this.#importText(stored)) {
+      if (this.importText(stored)) {
         // XMLから読み込んだ場合でも即JSONに変換し直す
         this.save();
         return true;
@@ -70,9 +83,10 @@ export default class WorkspaceStorage {
   }
 
   // JSONファイルとしてダウンロード
-  export() {
+  exportFile() {
+    const json = this.exportText({ pretty: true });
+    if (!json) return;
     try {
-      const json = JSON.stringify(Blockly.serialization.workspaces.save(this.#workspace), null, 2);
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -91,7 +105,7 @@ export default class WorkspaceStorage {
     try {
       const text = await WorkspaceStorage.#readFile(file);
       if (typeof text !== 'string') throw new Error('ファイルを読み込めませんでした。');
-      if (!this.#importText(text)) {
+      if (!this.importText(text)) {
         throw new Error('対応していないファイル形式です。');
       }
       this.save();
