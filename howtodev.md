@@ -16,6 +16,7 @@
 - Git と任意のエディタ
 - （静的サーバで動作させる場合）Python 3 または Node.js（`http-server` など）
 - （Cloudflare Workers にデプロイする場合）[Wrangler](https://developers.cloudflare.com/workers/cli-wrangler/)（`wrangler` CLI）
+  - workersの設定ではwrangler.dev.tomlを使用するようにしてください。現在のwrangler.tomlから内容をコピーし、workers kvのIDを書き換える必要があります。
 
 ## 開発フローの基本
 
