@@ -805,7 +805,7 @@ Blockly.Python['dict_set'] = function (block) {
   const dictCode = Blockly.Python.valueToCode(block, 'DICT', Blockly.Python.ORDER_NONE) || '{}';
   const keyCode = Blockly.Python.valueToCode(block, 'KEY', Blockly.Python.ORDER_NONE) || '""';
   const valueCode = Blockly.Python.valueToCode(block, 'VALUE', Blockly.Python.ORDER_NONE) || 'None';
-  return `${dictCode}[${keyCode}] = ${valueCode}\n`;
+  return `${dictCode}.update({${keyCode}: ${valueCode}})\n`;
 };
 // チャンネル・ボイス
 Blockly.Python['join_voice_channel'] = function (block) {
