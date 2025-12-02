@@ -782,6 +782,32 @@ Blockly.Python['print_to_console'] = function (block) {
   const text = Blockly.Python.valueToCode(block, 'TEXT', Blockly.Python.ORDER_NONE) || '""';
   return `print(${text})\n`;
 };
+// データ保存(JSON)
+Blockly.Python['json_load'] = function(block) {
+    const key = Blockly.Python.valueToCode(block, 'FILENAME', Blockly.Python.ORDER_NONE) || '"key"';
+    return [`_load_json_data(${key})`, Blockly.Python.ORDER_ATOMIC];
+};
+Blockly.Python['json_save'] = function(block) {
+    const key = Blockly.Python.valueToCode(block, 'FILENAME', Blockly.Python.ORDER_NONE) || '"key"';
+    const value = Blockly.Python.valueToCode(block, 'DATA', Blockly.Python.ORDER_NONE) || 'None';
+    return `_save_json_data(${key}, ${value})\n`;
+};
+Blockly.Python['dict_create'] = function (block) {
+  return ['{}', Blockly.Python.ORDER_ATOMIC];
+};
+Blockly.Python['dict_get'] = function (block) {
+  const dictCode = Blockly.Python.valueToCode(block, 'DICT', Blockly.Python.ORDER_NONE) || '{}';
+  const keyCode = Blockly.Python.valueToCode(block, 'KEY', Blockly.Python.ORDER_NONE) || '""';
+  const code = `(${dictCode}.get(${keyCode}, None))`;
+  return [code, Blockly.Python.ORDER_ATOMIC];
+};
+Blockly.Python['dict_set'] = function (block) {
+  const dictCode = Blockly.Python.valueToCode(block, 'DICT', Blockly.Python.ORDER_NONE) || '{}';
+  const keyCode = Blockly.Python.valueToCode(block, 'KEY', Blockly.Python.ORDER_NONE) || '""';
+  const valueCode = Blockly.Python.valueToCode(block, 'VALUE', Blockly.Python.ORDER_NONE) || 'None';
+  return `${dictCode}.update({${keyCode}: ${valueCode}})\n`;
+};
+// チャンネル・ボイス
 Blockly.Python['join_voice_channel'] = function (block) {
   return `\nif 'user' in locals() and user.voice:\n    await user.voice.channel.connect()\n`;
 };
