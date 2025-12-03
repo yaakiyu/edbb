@@ -191,7 +191,13 @@ ${rawCode}
 
 if __name__ == "__main__":
     # Token check
-    # bot.run('TOKEN') # 実行時はここにTokenを入れてください!
+
+    print('\\x1b[31m！！！！注意！！！！ トークンを設定していない場合は、実行前にコードの最後にある"TOKEN"部分にトークンを設定してください。\\n\\x1b[0m')
+    print('\\x1b[31m！！！！Warning！！！！ If you have not set a token, please set the token in the “TOKEN” section at the end of the code before execution.\\x1b[0m')
+    # トークン設定後は、注意を削除しても問題ありません。
+    # After setting the token, you may safely remove this warning message.
+
+    bot.run('TOKEN')  # 実行時はここにTokenを入れてください!
     pass
 `;
   return boilerplate.trim();
