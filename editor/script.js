@@ -1,7 +1,6 @@
 import Blocks from './blocks.js';
 import WorkspaceStorage from './storage.js';
 import { initShareFeature } from "./share.js";
-import { applyTranslations } from './translate.js';
 
 let workspace;
 let storage;
@@ -491,8 +490,6 @@ const initializeApp = () => {
       lucide.createIcons();
     }, 2000);
   });
-
-  applyTranslations({ workspace });
 };
 
 window.onload = initializeApp;

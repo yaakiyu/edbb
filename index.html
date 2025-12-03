@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="ja" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='16' fill='%236366f1' /%3E%3Cpath d='M20 42 Q32 52 44 42' stroke='white' stroke-width='4' fill='none' stroke-linecap='round' /%3E%3Ccircle cx='22' cy='26' r='6' fill='white' /%3E%3Ccircle cx='42' cy='26' r='6' fill='white' /%3E%3C/svg%3E">
     <title id="page-title">Easy Discord Bot Builder</title>
     <script>
-        // Get current URL
+        // 現在のURLを取得
         const url = window.location.href;
 
-        // Fetch title element
+        // タイトル要素を取得
         const titleEl = document.getElementById("page-title");
 
-        // Mark beta if on beta subdomain
+        // ベータ版ドメインに含まれるかチェック
         if (location.hostname.startsWith("beta")) {
             titleEl.textContent += " BETA";
         }
@@ -62,26 +62,26 @@
                 Easy Discord Bot Builder
             </h1>
             <p class="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-10 fade-in-up" style="transition-delay: 0.2s;">
-                A browser-based visual builder: combine blocks to create a Discord Bot without code.
+                ブラウザ上でブロックを組み合わせて、<br class="hidden md:inline">誰でも簡単に Discord Bot を作成できるビジュアルプログラミングツール
             </p>
             <div class="flex flex-col md:flex-row justify-center items-center gap-4 fade-in-up" style="transition-delay: 0.3s;">
                 <a href="./editor/index.html" class="group relative bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-8 rounded-xl transition duration-300 shadow-lg hover:shadow-blue-500/50 flex items-center overflow-hidden">
                     <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
                     <i class="fas fa-play mr-3 group-hover:scale-110 transition-transform"></i> 
-                    <span>Open the editor</span>
+                    <span>今すぐエディタを開く</span>
                 </a>
                 <a href="https://beta-edbb.himaiso.workers.dev/editor/" class="group relative bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 px-8 rounded-xl transition duration-300 shadow-lg hover:shadow-blue-500/50 flex items-center overflow-hidden">
                     <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
                     <i class="fas fa-play mr-3 group-hover:scale-110 transition-transform"></i> 
-                    <span>Open beta(JP)</span>
+                    <span>ベータ版を開く</span>
                 </a>
                 <a href="./wiki/index.html" class="group relative bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-8 rounded-xl transition duration-300 shadow-lg hover:shadow-blue-500/50 flex items-center overflow-hidden">
                     <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
                     <i class="fas fa-play mr-3 group-hover:scale-110 transition-transform"></i> 
-                    <span>Open Wiki(JP)</span>
+                    <span>Wikiを見る</span>
                 </a>
                 <a href="https://github.com/himais0giiiin/easy-bdc/" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-4 px-8 rounded-xl transition duration-300 border border-gray-700 hover:border-gray-600 flex items-center">
-                    <i class="fab fa-github mr-3 text-xl"></i> View GitHub
+                    <i class="fab fa-github mr-3 text-xl"></i> GitHubを見る
                 </a>
             </div>
             
@@ -103,38 +103,39 @@
         <section class="mb-32 fade-in-up">
             <div class="text-center max-w-3xl mx-auto">
                 <h2 class="text-3xl md:text-4xl font-bold text-white mb-8">
-                    <span class="underline decoration-blue-500">No coding required</span><br>Turn your ideas into reality.
+                    <span class="underline decoration-blue-500">プログラミング不要</span>で、<br>あなたのアイデアを形に。
                 </h2>
                 <p class="text-lg text-gray-300 leading-relaxed">
-                    “I want to build a bot but I can’t code...”<br>
-                    Just snap blocks together like a puzzle and your original bot is ready.<br>
-                    Generated code uses standard Python libraries, so it’s great for learning too.
+                    「Botを作ってみたいけど、コードが書けない...」<br>
+                    そんな悩みはもう不要です。パズルのようにブロックを繋ぎ合わせるだけで、<br>
+                    あなただけのオリジナルBotが完成します。<br>
+                    生成されたコードはPython標準のライブラリを使用しているため、学習用としても最適です。
                 </p>
             </div>
         </section>
 
         <!-- Features -->
         <section class="mb-32">
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-12 text-center fade-in-up">✨ Key Features</h2>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-12 text-center fade-in-up">✨ 主な特徴</h2>
             <div class="grid md:grid-cols-2 gap-8">
                 <div class="bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-700 hover:border-green-500/50 transition duration-300 group fade-in-up">
                     <div class="w-14 h-14 bg-green-900/30 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                         <i class="fas fa-shapes text-2xl text-green-400"></i>
                     </div>
-                    <h3 class="text-2xl font-bold text-white mb-4">Visual programming</h3>
-                    <p class="text-gray-400 leading-relaxed">Drag and drop to build; no need to memorize complex syntax—focus on your logic.</p>
+                    <h3 class="text-2xl font-bold text-white mb-4">ビジュアルプログラミング</h3>
+                    <p class="text-gray-400 leading-relaxed">直感的なドラッグ＆ドロップ操作で開発可能。複雑な構文を覚える必要はなく、ロジックの構築に集中できます。</p>
                 </div>
                 
                 <div class="bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-700 hover:border-purple-500/50 transition duration-300 group fade-in-up" style="transition-delay: 0.1s;">
                     <div class="w-14 h-14 bg-purple-900/30 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                         <i class="fas fa-cubes text-2xl text-purple-400"></i>
                     </div>
-                    <h3 class="text-2xl font-bold text-white mb-4">Rich block library</h3>
+                    <h3 class="text-2xl font-bold text-white mb-4">豊富な機能ブロック</h3>
                     <ul class="space-y-2 text-gray-400">
-                        <li class="flex items-center"><i class="fas fa-check text-purple-500 mr-2"></i> Replies to incoming messages</li>
-                        <li class="flex items-center"><i class="fas fa-check text-purple-500 mr-2"></i> Slash commands (/command)</li>
-                        <li class="flex items-center"><i class="fas fa-check text-purple-500 mr-2"></i> Embed messages</li>
-                        <li class="flex items-center"><i class="fas fa-check text-purple-500 mr-2"></i> Prefix commands (!ping)</li>
+                        <li class="flex items-center"><i class="fas fa-check text-purple-500 mr-2"></i> メッセージ受信時の応答</li>
+                        <li class="flex items-center"><i class="fas fa-check text-purple-500 mr-2"></i> スラッシュコマンド (/command)</li>
+                        <li class="flex items-center"><i class="fas fa-check text-purple-500 mr-2"></i> 埋め込みメッセージ (Embed)</li>
+                        <li class="flex items-center"><i class="fas fa-check text-purple-500 mr-2"></i> プレフィックスコマンド (!ping)</li>
                     </ul>
                 </div>
 
@@ -142,23 +143,23 @@
                     <div class="w-14 h-14 bg-yellow-900/30 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                         <i class="fab fa-python text-2xl text-yellow-400"></i>
                     </div>
-                    <h3 class="text-2xl font-bold text-white mb-4">Python code generation</h3>
-                    <p class="text-gray-400 leading-relaxed">Automatically generates code for the industry-standard <code>discord.py</code> library. Copy, paste, and run.</p>
+                    <h3 class="text-2xl font-bold text-white mb-4">Python コード生成</h3>
+                    <p class="text-gray-400 leading-relaxed">業界標準の <code>discord.py</code> ライブラリに対応したコードを自動生成。生成されたコードはそのまま実行可能です。</p>
                 </div>
 
                 <div class="bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-700 hover:border-pink-500/50 transition duration-300 group fade-in-up" style="transition-delay: 0.3s;">
                     <div class="w-14 h-14 bg-pink-900/30 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                         <i class="fas fa-palette text-2xl text-pink-400"></i>
                     </div>
-                    <h3 class="text-2xl font-bold text-white mb-4">Modern UI</h3>
-                    <p class="text-gray-400 leading-relaxed">Tailwind CSS styling with a comfortable dark mode for a smooth building experience.</p>
+                    <h3 class="text-2xl font-bold text-white mb-4">モダンな UI</h3>
+                    <p class="text-gray-400 leading-relaxed">Tailwind CSS による洗練されたデザインと、目に優しいダークモード対応で、快適な開発体験を提供します。</p>
                 </div>
             </div>
         </section>
 
         <!-- Usage -->
         <section class="mb-32">
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-12 text-center fade-in-up">🛠️ How to use</h2>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-12 text-center fade-in-up">🛠️ 使い方</h2>
             <div class="relative">
                 <!-- Connecting Line (Desktop) -->
                 <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gray-800"></div>
@@ -167,8 +168,8 @@
                     <!-- Step 1 -->
                     <div class="relative flex flex-col md:flex-row items-center fade-in-up">
                         <div class="md:w-1/2 md:pr-12 md:text-right order-2 md:order-1">
-                            <h3 class="text-2xl font-bold text-white mb-2">1. Assemble your logic</h3>
-                            <p class="text-gray-400">Pick blocks from the left menu and place them on the workspace.</p>
+                            <h3 class="text-2xl font-bold text-white mb-2">1. ロジックを組む</h3>
+                            <p class="text-gray-400">左側のメニューからブロックを選び、ワークスペースに配置します。</p>
                         </div>
                         <div class="relative md:absolute md:left-1/2 md:transform md:-translate-x-1/2 w-10 h-10 bg-blue-600 rounded-full border-4 border-gray-900 flex items-center justify-center font-bold text-white z-10 order-1 md:order-2 mb-4 md:mb-0 mx-auto md:mx-0">1</div>
                         <div class="md:w-1/2 md:pl-12 order-3"></div>
@@ -179,16 +180,16 @@
                         <div class="md:w-1/2 md:pr-12 md:text-right order-2 md:order-1"></div>
                         <div class="relative md:absolute md:left-1/2 md:transform md:-translate-x-1/2 w-10 h-10 bg-blue-600 rounded-full border-4 border-gray-900 flex items-center justify-center font-bold text-white z-10 order-1 md:order-2 mb-4 md:mb-0 mx-auto md:mx-0">2</div>
                         <div class="md:w-1/2 md:pl-12 order-3">
-                            <h3 class="text-2xl font-bold text-white mb-2">2. Configure events</h3>
-                            <p class="text-gray-400">Place event blocks (e.g., “When the bot starts”) and connect the actions.</p>
+                            <h3 class="text-2xl font-bold text-white mb-2">2. イベントを設定</h3>
+                            <p class="text-gray-400">「Bot が起動したとき」などのイベントブロックを配置し、処理を繋げます。</p>
                         </div>
                     </div>
 
                     <!-- Step 3 -->
                     <div class="relative flex flex-col md:flex-row items-center fade-in-up">
                         <div class="md:w-1/2 md:pr-12 md:text-right order-2 md:order-1">
-                            <h3 class="text-2xl font-bold text-white mb-2">3. Review the code</h3>
-                            <p class="text-gray-400">Check and copy the Python code generated in real time.</p>
+                            <h3 class="text-2xl font-bold text-white mb-2">3. コードを確認</h3>
+                            <p class="text-gray-400">リアルタイムで生成される Python コードを確認・コピーします。</p>
                         </div>
                         <div class="relative md:absolute md:left-1/2 md:transform md:-translate-x-1/2 w-10 h-10 bg-blue-600 rounded-full border-4 border-gray-900 flex items-center justify-center font-bold text-white z-10 order-1 md:order-2 mb-4 md:mb-0 mx-auto md:mx-0">3</div>
                         <div class="md:w-1/2 md:pl-12 order-3"></div>
@@ -199,8 +200,8 @@
                         <div class="md:w-1/2 md:pr-12 md:text-right order-2 md:order-1"></div>
                         <div class="relative md:absolute md:left-1/2 md:transform md:-translate-x-1/2 w-10 h-10 bg-blue-600 rounded-full border-4 border-gray-900 flex items-center justify-center font-bold text-white z-10 order-1 md:order-2 mb-4 md:mb-0 mx-auto md:mx-0">4</div>
                         <div class="md:w-1/2 md:pl-12 order-3">
-                            <h3 class="text-2xl font-bold text-white mb-2">4. Run your bot</h3>
-                            <p class="text-gray-400">Run the copied code and share your bot with the world.</p>
+                            <h3 class="text-2xl font-bold text-white mb-2">4. Bot を動かす</h3>
+                            <p class="text-gray-400">コピーしたコードを実行し、あなたの Bot を世界に公開しましょう！</p>
                         </div>
                     </div>
                 </div>
@@ -233,10 +234,10 @@
 
         <!-- CTA -->
         <section class="text-center py-20 bg-gradient-to-b from-gray-900 to-gray-800 rounded-3xl border border-gray-800 fade-in-up">
-            <h2 class="text-4xl font-bold text-white mb-6">Start building now</h2>
-            <p class="text-xl text-gray-400 mb-10">No installs needed. Start directly in your browser.</p>
+            <h2 class="text-4xl font-bold text-white mb-6">さあ、開発を始めよう</h2>
+            <p class="text-xl text-gray-400 mb-10">インストール不要。ブラウザですぐに始められます。</p>
             <a href="./editor/index.html" class="inline-block bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-12 rounded-full transition duration-300 shadow-lg hover:shadow-blue-500/50 transform hover:-translate-y-1">
-                <i class="fas fa-rocket mr-2"></i> Launch editor
+                <i class="fas fa-rocket mr-2"></i> エディタを起動する
             </a>
         </section>
 
